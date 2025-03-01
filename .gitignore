@@ -1,3 +1,10 @@
 bx_enh_dbg.ini
 cmake-build-debug-wsl/
 .idea/
+/build
+image.iso
+image.iso
+image.iso
+*.iso
+/.vscode
+image.iso
