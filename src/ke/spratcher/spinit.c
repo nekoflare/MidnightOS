@@ -16,21 +16,29 @@ This is the main C file for most SPRATCHER components.
 
 CHAR* SpratcherCurrentStep = {0};
 
-int KiSpratcherInitStage0(void);
+// Forward declarations
+STATUS KiSpratcherInitStage0(void);
 
-KERNEL_API int KiSpratcherInit()
+KERNEL_API STATUS KiSpratcherInit()
 {
-    if (KeGetCurrentIrql() < HIGH_LEVEL) KeRaiseIrql(HIGH_LEVEL, NULL);
-    return KiSpratcherInitStage0();
+    KIRQL oldIrql;
+    BOOL irqlSet = FALSE;
+    if (KeGetCurrentIrql() >= HIGH_LEVEL) {
+        KeRaiseIrql(HIGH_LEVEL, &oldIrql);
+        irqlSet = TRUE;
+    }
+
+    const STATUS dStatus = KiSpratcherInitStage0();
+
+    if (irqlSet)
+        KeLowerIrql(oldIrql);
+
+    return dStatus;
 }
-
-
-
-#include <cpuid.h>
 
 #define SPRATCHER_ASSERT(x, y, z) if (!(x)) { KeDebugPrint("Spratcher: %s\n", y); } else { KeDebugPrint("Spratcher: %s\n", z); }
 
-int KiSpratcherInitStage0(void) {
+STATUS KiSpratcherInitStage0(void) {
     KeDebugPrint("Spratcher Init...\n");
     KeDebugPrint("Spratcher Build [%s, %s]\n", __DATE__, __TIME__);
     KeDebugPrint("[ Init ] Spratcher is preparing stack frame...\n");

@@ -30,7 +30,7 @@ void KeStackTraceRegisterFunction(ULONGLONG address, CHAR* name) {
 }
 
 KERNEL_API CHAR* KeStackTraceGetFunctionName(ULONGLONG address) {
-    
+
     for (UINT i = 0; i < 25; i++) {
         if (FunctionAddress[i] == address) {
 
@@ -54,7 +54,7 @@ KERNEL_API void KeStackTraceRegDefaults() {
 }
 
 KERNEL_API void KeWalkStackPre(PVOID stack_top, UINT max_frames, ULONGLONG *addresses) {
-    
+
     ULONGLONG* base_pointer = (ULONGLONG*)stack_top;
     for (UINT i = 0; i < max_frames; i++) {
         if (base_pointer == NULL) {

@@ -56,6 +56,7 @@ KERNEL_API STATUS IoWritePortByte(
         return STATUS_DENIED;
     }
 
+    asm volatile ("xchg %bx, %bx");
     __asm__ __volatile__ (
         "outb %1, %0"
         :

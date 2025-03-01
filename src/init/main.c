@@ -16,7 +16,7 @@
 
 KERNEL_API void KernelMain(void) {
     // Initialize HAL component
-    if (KeGetCurrentIrql() < HIGH_LEVEL)
+    if (KeGetCurrentIrql() >= HIGH_LEVEL)
         KeRaiseIrql(HIGH_LEVEL, NULL); // Ignore old IRQL
     KiInitializeDebugConn();
     KiInitializeHAL();
@@ -26,6 +26,7 @@ KERNEL_API void KernelMain(void) {
             KiExplicitHalt();
         }
     }
+
     KeDebugPrint("Spratcher initialized\n");
     KeWalkStack(10);
     while (true) {
