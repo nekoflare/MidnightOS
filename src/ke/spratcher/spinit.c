@@ -23,7 +23,7 @@ KERNEL_API STATUS KiSpratcherInit()
 {
     KIRQL oldIrql;
     BOOL irqlSet = FALSE;
-    if (KeGetCurrentIrql() >= HIGH_LEVEL) {
+    if (KeGetCurrentIrql() < HIGH_LEVEL) {
         KeRaiseIrql(HIGH_LEVEL, &oldIrql);
         irqlSet = TRUE;
     }

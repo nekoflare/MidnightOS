@@ -9,7 +9,9 @@
 
 KERNEL_API LPSTR StringifyBugCheckError(BUGCHECK_REASON BugCheckReason) {
     switch (BugCheckReason) {
-        case IRQL_LESS_OR_EQUAL: return "IRQL_LESS_OR_EQUAL";
+        case BUGCHECK_IRQL_LESS_OR_EQUAL: return "IRQL_LESS_OR_EQUAL";
+        case BUGCHECK_UNEXPECTED_STATE: return "UNEXPECTED_STATE";
+        case BUGCHECK_UNRECOVERABLE_NO_MEMORY: return "UNRECOVERABLE_NO_MEMORY";
         default: return "Unkown bug check reason.";
     }
 }
@@ -17,7 +19,6 @@ KERNEL_API LPSTR StringifyBugCheckError(BUGCHECK_REASON BugCheckReason) {
 KERNEL_API void KeBugCheck(BUGCHECK_REASON BugCheckReason) {
     KeDebugPrintNoSync("*** STOP ***\n");
     KeDebugPrintNoSync("STATUS: %s", StringifyBugCheckError(BugCheckReason));
-    asm volatile ("xchg %bx, %bx");
     KiExplicitDisableInterrupts();
     KiExplicitHalt();
 }

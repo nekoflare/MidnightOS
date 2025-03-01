@@ -17,10 +17,8 @@ enable_sse:
 global _start
 extern KernelMain
 _start:
-    xchg bx, bx
-
-    ; Align stack
-    and rsp, 0xfffffffffffffff0
+    ; Align stack (to 8 bytes but after push itll be 16 bytes)
+    and rsp, 0xfffffffffffffff8
 
     ; Enable SSE (explicit)
     call enable_sse

@@ -42,7 +42,7 @@ KERNEL_API void KeRaiseIrql(
         *OldIrql = CurrentIrql;
 
     if (CurrentIrql >= NewIrql) {
-        KeBugCheck(IRQL_LESS_OR_EQUAL);
+        KeBugCheck(BUGCHECK_IRQL_LESS_OR_EQUAL);
     }
 
     CurrentIrql = NewIrql;

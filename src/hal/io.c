@@ -4,6 +4,8 @@
 
 #include "io.h"
 
+#include <ke/error.h>
+
 static BOOL KiIsIoPortValid(
     PIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort) {
@@ -49,20 +51,22 @@ KERNEL_API STATUS IoWritePortByte(
     UCHAR ucValue
     ) {
     if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+        SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
     if (!KiIsIoPortWritable(pPortDescriptor)) {
+        SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
 
-    asm volatile ("xchg %bx, %bx");
     __asm__ __volatile__ (
         "outb %1, %0"
         :
         : "dN" (usPort), "a" (ucValue)
     );
 
+    SetLastError(STATUS_SUCCESS);
     return STATUS_SUCCESS;
 }
 
@@ -72,10 +76,12 @@ KERNEL_API STATUS IoReadPortByte(
     PUCHAR pucValue
     ) {
     if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+        SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
     if (!KiIsIoPortReadable(pPortDescriptor)) {
+        SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
 
@@ -87,9 +93,9 @@ KERNEL_API STATUS IoReadPortByte(
         : "dN" (usPort)
     );
 
-
     *pucValue = ucReadValue;
 
+    SetLastError(STATUS_SUCCESS);
     return STATUS_SUCCESS;
 }
 
@@ -99,10 +105,12 @@ KERNEL_API STATUS IoWritePortWord(
     USHORT usValue
     ) {
     if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+        SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
     if (!KiIsIoPortWritable(pPortDescriptor)) {
+        SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
 
@@ -112,6 +120,7 @@ KERNEL_API STATUS IoWritePortWord(
         : "dN" (usPort), "a" (usValue)
     );
 
+    SetLastError(STATUS_SUCCESS);
     return STATUS_SUCCESS;
 }
 
@@ -121,10 +130,12 @@ KERNEL_API STATUS IoReadPortWord(
     PUSHORT pusValue
     ) {
     if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+        SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
     if (!KiIsIoPortReadable(pPortDescriptor)) {
+        SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
 
@@ -138,6 +149,7 @@ KERNEL_API STATUS IoReadPortWord(
 
     *pusValue = usReadValue;
 
+    SetLastError(STATUS_SUCCESS);
     return STATUS_SUCCESS;
 }
 
@@ -147,10 +159,12 @@ KERNEL_API STATUS IoWritePortDword(
     ULONG ulValue
     ) {
     if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+        SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
     if (!KiIsIoPortWritable(pPortDescriptor)) {
+        SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
 
@@ -160,6 +174,7 @@ KERNEL_API STATUS IoWritePortDword(
         : "dN" (usPort), "a" (ulValue)
     );
 
+    SetLastError(STATUS_SUCCESS);
     return STATUS_SUCCESS;
 }
 
@@ -169,7 +184,13 @@ KERNEL_API STATUS IoReadPortDword(
     PULONG pulValue
     ) {
     if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+        SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
+    }
+
+    if (!KiIsIoPortReadable(pPortDescriptor)) {
+        SetLastError(STATUS_DENIED);
+        return STATUS_DENIED;
     }
 
     ULONG ulReadValue;
@@ -182,5 +203,6 @@ KERNEL_API STATUS IoReadPortDword(
 
     *pulValue = ulReadValue;
 
+    SetLastError(STATUS_SUCCESS);
     return STATUS_SUCCESS;
 }

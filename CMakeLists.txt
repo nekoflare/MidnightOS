@@ -49,6 +49,9 @@ add_executable(MidnightOS
         src/ke/stacktrace.h
         src/ke/spratcher/spinit.c
         src/ke/spratcher/spinit.h
+        src/mm/physical.c
+        src/mm/physical.h
+        src/rtl/limine.h
 )
 
 # Include directories
