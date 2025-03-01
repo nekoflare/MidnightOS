@@ -52,6 +52,8 @@ add_executable(MidnightOS
         src/mm/physical.c
         src/mm/physical.h
         src/rtl/limine.h
+        src/mm/common.c
+        src/mm/common.h
 )
 
 # Include directories

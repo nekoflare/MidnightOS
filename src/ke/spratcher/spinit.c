@@ -11,6 +11,7 @@ This is the main C file for most SPRATCHER components.
 #include <kdbg/debug_print.h>
 #include <cpu/cpu.h>
 #include <cpuid.h>
+#include <ke/bugcheck.h>
 
 #define SPRATCHER_ASSERT(x, y, z) if (!(x)) { KeDebugPrint("\033[31mSpratcher: %s\033[0m\n", y); } else { KeDebugPrint("Spratcher: %s\n", z); }
 
@@ -19,7 +20,7 @@ CHAR* SpratcherCurrentStep = {0};
 // Forward declarations
 STATUS KiSpratcherInitStage0(void);
 
-KERNEL_API STATUS KiSpratcherInit()
+KERNEL_API void KiSpratcherInit()
 {
     KIRQL oldIrql;
     BOOL irqlSet = FALSE;
@@ -33,7 +34,11 @@ KERNEL_API STATUS KiSpratcherInit()
     if (irqlSet)
         KeLowerIrql(oldIrql);
 
-    return dStatus;
+    if (dStatus != STATUS_SUCCESS) {
+        KeBugCheck(BUGCHECK_UNEXPECTED_STATE);
+    }
+
+    KeDebugPrint("Spratcher initialized\n");
 }
 
 #define SPRATCHER_ASSERT(x, y, z) if (!(x)) { KeDebugPrint("Spratcher: %s\n", y); } else { KeDebugPrint("Spratcher: %s\n", z); }

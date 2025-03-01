@@ -9,11 +9,23 @@
 #include <ke/bugcheck.h>
 #include <ke/error.h>
 
+#include "common.h"
+
 volatile struct limine_memmap_request memoryMapRequest = {
     .id = LIMINE_MEMMAP_REQUEST,
     .revision = 0,
     .response = NULL
 };
+
+struct MM_FREELIST_ENTRY;
+typedef struct MM_FREELIST_ENTRY* PMM_FREELIST_ENTRY;
+
+struct MM_FREELIST_ENTRY {
+    SIZE_T PageCount;
+    PMM_FREELIST_ENTRY Next;
+};
+
+static struct MM_FREELIST_ENTRY* FreeListHead = NULL;
 
 static BOOL KiIsMemoryMapValid() {
     return memoryMapRequest.response != NULL;
@@ -175,4 +187,114 @@ KERNEL_API void MmSummarizeMemoryMap() {
     KeDebugPrint("Framebuffer Memory:            %10llu KB (%.6f%%)\n", ullFramebuffer / 1024, dFramebufferPerc);
     KeDebugPrint("===========================================\n");
     KeDebugPrint("Overall Usable Memory:         %.2f MB\n", dOverallMB);
+}
+
+KERNEL_API void KiInitializePhysicalMemoryManager() {
+    // Ensure the memory map is valid
+    if (!KiIsMemoryMapValid()) {
+        KeDebugPrint("Memory map not available.\n");
+        SetLastError(STATUS_FAILURE);
+        KeBugCheck(BUGCHECK_UNRECOVERABLE_NO_MEMORY);
+    }
+
+    FreeListHead = NULL;
+    SIZE_T dEntryCount = MmGetMemoryMapEntryCount();
+    struct MEMORY_MAP_ENTRY ent;
+
+    for (SIZE_T i = 0; i < dEntryCount; i++) {
+        STATUS status = MmGetMemoryMapEntry(&ent, i);
+        if (status != STATUS_SUCCESS) {
+            KeDebugPrint("Failure retrieving entry %zu.\n", i);
+            SetLastError(STATUS_NOT_FOUND);
+            KeBugCheck(BUGCHECK_UNRECOVERABLE_NO_MEMORY);
+        }
+
+        if (ent.Type == MMET_USABLE) {
+            ULONGLONG base = ent.Base;
+            ULONGLONG length = ent.Length;
+
+            // First full page starts at the next page boundary after base
+            ULONGLONG start_page_index = (base + PAGE_SIZE - 1) / PAGE_SIZE;
+            ULONGLONG start_address = start_page_index * PAGE_SIZE;
+
+            // Last full page ends before or at base + length
+            ULONGLONG end_page_index = (base + length - 1) / PAGE_SIZE;
+            ULONGLONG end_address = end_page_index * PAGE_SIZE + PAGE_SIZE;
+
+            // Check if there are full pages within the region
+            if (start_address < base + length && start_address < end_address) {
+                SIZE_T page_count = (end_page_index - start_page_index + 1);
+
+                // Place the free list entry at the start of the block
+                PMM_FREELIST_ENTRY free_entry = (PMM_FREELIST_ENTRY)start_address;
+                free_entry->PageCount = page_count;
+                free_entry->Next = FreeListHead;
+                FreeListHead = free_entry;
+
+                KeDebugPrint("Added free block at %p with %zu pages\n",
+                             (PVOID)start_address, page_count);
+            }
+        }
+    }
+}
+
+KERNEL_API STATUS MmAllocatePage(PVOID* Block) {
+    if (!Block) {
+        SetLastError(STATUS_INVALID_PARAMETER);
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    PMM_FREELIST_ENTRY prev = NULL;
+    PMM_FREELIST_ENTRY current = FreeListHead;
+
+    while (current != NULL) {
+        if (current->PageCount >= 1) {
+            PVOID allocated_page = (PVOID)current;
+
+            if (current->PageCount == 1) {
+                // Remove the block from the list
+                if (prev == NULL) {
+                    FreeListHead = current->Next;
+                } else {
+                    prev->Next = current->Next;
+                }
+            } else {
+                // Split the block: move header to next page
+                PMM_FREELIST_ENTRY new_entry =
+                    (PMM_FREELIST_ENTRY)((PUCHAR)current + PAGE_SIZE);
+                new_entry->PageCount = current->PageCount - 1;
+                new_entry->Next = current->Next;
+
+                if (prev == NULL) {
+                    FreeListHead = new_entry;
+                } else {
+                    prev->Next = new_entry;
+                }
+            }
+
+            *Block = allocated_page;
+            SetLastError(STATUS_SUCCESS);
+            return STATUS_SUCCESS;
+        }
+
+        prev = current;
+        current = current->Next;
+    }
+
+    SetLastError(STATUS_OUT_OF_MEMORY);
+    return STATUS_OUT_OF_MEMORY;
+}
+
+KERNEL_API void MmFreePage(PVOID Block) {
+    if (!Block) {
+        SetLastError(STATUS_INVALID_PARAMETER);
+        return;
+    }
+
+    PMM_FREELIST_ENTRY free_entry = (PMM_FREELIST_ENTRY)Block;
+    free_entry->PageCount = 1;
+    free_entry->Next = FreeListHead;
+    FreeListHead = free_entry;
+
+    SetLastError(STATUS_SUCCESS);
 }

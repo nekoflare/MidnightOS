@@ -36,4 +36,9 @@ KERNEL_API STATUS MmGetMemoryMapEntry(
 
 KERNEL_API void MmSummarizeMemoryMap();
 
+KERNEL_API void KiInitializePhysicalMemoryManager();
+KERNEL_API STATUS MmAllocatePage(
+    PVOID* Page);
+KERNEL_API void MmFreePage(PVOID Page);
+
 #endif //PHYSICAL_H
