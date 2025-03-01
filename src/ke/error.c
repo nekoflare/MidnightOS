@@ -14,6 +14,11 @@ KERNEL_API LPSTR StringifyError(STATUS status) {
         case STATUS_INVALID_PARAMETER:      return "STATUS_INVALID_PARAMETER";
         case STATUS_INSUFFICIENT_RESOURCES: return "STATUS_INSUFFICIENT_RESOURCES";
         case STATUS_DENIED:                 return "STATUS_DENIED";
+        case STATUS_NOT_IMPLEMENTED:        return "STATUS_NOT_IMPLEMENTED";
+        case STATUS_NOT_FOUND:              return "STATUS_NOT_FOUND";
+        case STATUS_INVALID_HANDLE:         return "STATUS_INVALID_HANDLE";
+        case STATUS_NOT_SUPPORTED:          return "STATUS_NOT_SUPPORTED";
+        case STATUS_ABORTED:                return "STATUS_ABORTED";
         default:                            return "STATUS_UNKNOWN_ERROR (Literally)";
     }
 }

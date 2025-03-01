@@ -25,5 +25,8 @@ _start:
     ; Enable SSE (explicit)
     call enable_sse
 
+    xor rbp, rbp
+    push rbp ; For the sake of the stack frame
+
     ; Jump to kernel
     call KernelMain

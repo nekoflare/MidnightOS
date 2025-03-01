@@ -13,14 +13,24 @@ KERNEL_API void RtlCreateSpinLock(
 
 KERNEL_API void RtlAcquireSpinlock(
     PSPINLOCK Spinlock) {
-    KIRQL OldIrql;
-    KeRaiseIrql(DEVICE_LEVEL, &OldIrql);
+    KIRQL CurrentIrql;
+    KIRQL OldIrql = 0;
+    
+    // Raise IRQL if needed
+    CurrentIrql = KeGetCurrentIrql();
+    if (CurrentIrql < DEVICE_LEVEL) KeRaiseIrql(DEVICE_LEVEL, &OldIrql);
+
     while (Spinlock->Lock == SPINLOCK_LOCKED) {
-        asm volatile ("pause");
+        asm volatile ("pause"); // Self explanatory
     }
+
+    // Lock
     Spinlock->Lock = SPINLOCK_LOCKED;
-    KeLowerIrql(OldIrql);
+
+    // Restore old
+    if (CurrentIrql < DEVICE_LEVEL) KeLowerIrql(OldIrql);
 }
+
 
 KERNEL_API void RtlReleaseSpinlock(
     PSPINLOCK Spinlock) {

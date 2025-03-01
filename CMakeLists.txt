@@ -1,25 +1,25 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(KittyOS VERSION 1.0 LANGUAGES C CXX ASM)
+project(MidnightOS VERSION 1.0 LANGUAGES C CXX ASM)
 
 enable_language(ASM_NASM)
 
 # Specify compilers
-set(CMAKE_C_COMPILER /usr/bin/x86_64-linux-gnu-gcc-11)
-set(CMAKE_CXX_COMPILER /usr/bin/x86_64-linux-gnu-g++-11)
-set(CMAKE_ASM_NASM_COMPILER /usr/bin/nasm)
+set(CMAKE_C_COMPILER gcc)
+set(CMAKE_CXX_COMPILER g++)
+set(CMAKE_ASM_NASM_COMPILER nasm)
 
 # C++ standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(CMAKE_C_FLAGS "-lgcc -Wl,--export-dynamic -I./src/ -Wall -O0 -fno-stack-protector -Wextra -ffreestanding -fno-stack-check -fno-lto -ffunction-sections -fdata-sections -m64 -msse -mno-mmx -mno-sse2 -fno-pic -mno-sse3 -mno-ssse3 -mno-avx -mno-avx2 -mno-avx512f -mno-red-zone -march=x86-64 -static -Isrc/ -Wformat-security -Wformat -g -mcmodel=kernel")
-set(CMAKE_CXX_FLAGS "-lgcc -Wl,--export-dynamic -I./src/ -fpermissive -fno-rtti -Wall -O0 -fno-stack-protector -Wextra -ffreestanding -fno-stack-check -fno-lto -ffunction-sections -fdata-sections -fno-exceptions -fno-pic -m64 -msse -mno-mmx -mno-sse2 -mno-sse3 -mno-ssse3 -mno-avx -mno-avx2 -mno-avx512f -mno-red-zone -march=x86-64 -fno-threadsafe-statics -std=c++20 -Isrc/ -Wformat-security -Wformat -g -mcmodel=kernel")
+set(CMAKE_C_FLAGS "-lgcc -Wl,--export-dynamic -I./src/ -Wall -O0 -fno-stack-protector -fno-omit-frame-pointer -Wextra -ffreestanding -fno-stack-check -fno-lto -ffunction-sections -fdata-sections -m64 -msse -mno-mmx -mno-sse2 -fno-pic -mno-sse3 -mno-ssse3 -mno-avx -mno-avx2 -mno-avx512f -mno-red-zone -march=x86-64 -static -Isrc/ -Wformat-security -Wformat -g -mcmodel=kernel")
+set(CMAKE_CXX_FLAGS "-lgcc -Wl,--export-dynamic -I./src/ -fpermissive -fno-rtti -fno-omit-frame-pointer -Wall -O0 -fno-stack-protector -Wextra -ffreestanding -fno-stack-check -fno-lto -ffunction-sections -fdata-sections -fno-exceptions -fno-pic -m64 -msse -mno-mmx -mno-sse2 -mno-sse3 -mno-ssse3 -mno-avx -mno-avx2 -mno-avx512f -mno-red-zone -march=x86-64 -fno-threadsafe-statics -std=c++20 -Isrc/ -Wformat-security -Wformat -g -mcmodel=kernel")
 set(CMAKE_EXE_LINKER_FLAGS "-lgcc -nostdlib -static -z text -T ../linker.ld -Wl,--export-dynamic -z max-page-size=0x1000")
 set(CMAKE_ASM_NASM_FLAGS "-f elf64")
 
 # Define executable
-add_executable(KittyOS
+add_executable(MidnightOS
         src/kernel.h
         src/init/main.c
         src/cpu/cpu.h
@@ -45,26 +45,30 @@ add_executable(KittyOS
         src/ke/irql.h
         src/ke/bugcheck.c
         src/ke/bugcheck.h
+        src/ke/stacktrace.c
+        src/ke/stacktrace.h
+        src/ke/spratcher/spinit.c
+        src/ke/spratcher/spinit.h
 )
 
 # Include directories
-include_directories(KittyOS PRIVATE src)
-include_directories(KittyOS PRIVATE src/acpi/)
-include_directories(KittyOS PRIVATE src/mem/liballoc/)
-# target_include_directories(KittyOS PRIVATE src)
+include_directories(MidnightOS PRIVATE src)
+include_directories(MidnightOS PRIVATE src/acpi/)
+include_directories(MidnightOS PRIVATE src/mem/liballoc/)
+# target_include_directories(MidnightOS PRIVATE src)
 
 # Post-build custom target
 add_custom_target(PostBuild ALL
-    COMMAND ${CMAKE_COMMAND} -E rename KittyOS kernel.elf
+    COMMAND ${CMAKE_COMMAND} -E rename MidnightOS kernel.elf
     COMMAND chmod +x ../iso.sh
     COMMAND ../iso.sh
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMENT "Post-build: Renaming KittyOS to kernel.elf and invoking iso.sh"
-    DEPENDS KittyOS
+    COMMENT "Post-build: Renaming MidnightOS to kernel.elf and invoking iso.sh"
+    DEPENDS MidnightOS
 )
 
 # QEMU execution custom target
 add_custom_target(PerformAll ALL
-    COMMAND qemu-system-x86_64.exe -cpu qemu64,+fsgsbase,+syscall -M smm=off -smp 6 -M q35 -m 2G -debugcon stdio -cdrom image.iso -drive if=pflash,unit=0,format=raw,file=./ovmf/ovmf-code-x86_64.fd,readonly=on -drive if=pflash,unit=1,format=raw,file=./ovmf/ovmf-vars-x86_64.fd
+    COMMAND qemu-system-x86_64.exe -cpu qemu64,+fsgsbase,+syscall -M smm=off -smp 6 -M q35 -m 2G -debugcon stdio -cdrom image.iso -drive if=pflash,unit=0,format=raw,file=../ovmf/ovmf-code-x86_64.fd,readonly=on -drive if=pflash,unit=1,format=raw,file=../ovmf/ovmf-vars-x86_64.fd
     DEPENDS PostBuild
 )

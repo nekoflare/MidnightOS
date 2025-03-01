@@ -11,12 +11,19 @@
 
 #ifdef __cplusplus
 #define KERNEL_API extern "C"
+#define ASSEMBLY extern "C"
 #endif
 
 #ifndef __cplusplus
 #define KERNEL_API
+#define ASSEMBLY extern
 #endif
 
+#define CDECL __attribute__((cdecl))
+#define STDCALL __attribute__((stdcall))
+
+
+typedef void*                  HANDLE;
 typedef signed char            CHAR;
 typedef unsigned char          UCHAR;
 typedef short                  SHORT;
@@ -33,6 +40,8 @@ typedef long long              INT64;
 typedef unsigned long long     UINT64;
 typedef void*                  PVOID;
 typedef const void*            PCVOID;
+typedef __int128_t             INT128;
+typedef __uint128_t            UINT128;
 
 typedef signed char            *PCHAR;
 typedef unsigned char          *PUCHAR;
@@ -70,6 +79,12 @@ typedef ssize_t SSIZE_T;
 
 typedef unsigned long STATUS;
 
+
+#define STATUS_ABORTED 10
+#define STATUS_NOT_SUPPORTED 9
+#define STATUS_INVALID_HANDLE 8
+#define STATUS_NOT_FOUND 7
+#define STATUS_NOT_IMPLEMENTED 6
 #define STATUS_DENIED 5
 #define STATUS_INSUFFICIENT_RESOURCES 4
 #define STATUS_INVALID_PARAMETER 3
