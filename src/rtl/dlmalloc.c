@@ -3450,20 +3450,20 @@ Void_t* mALLOc(size_t bytes)
     }
   }
 
-  /* 
+  /*
      If this is a large request, consolidate fastbins before continuing.
      While it might look excessive to kill all fastbins before
      even seeing if there is space available, this avoids
      fragmentation problems normally associated with fastbins.
      Also, in practice, programs tend to have runs of either small or
-     large requests, but less often mixtures, so consolidation is not 
+     large requests, but less often mixtures, so consolidation is not
      invoked all that often in most programs. And the programs that
      it is called frequently in otherwise tend to fragment.
   */
 
   else {
     idx = largebin_index(nb);
-    if (have_fastchunks(av)) 
+    if (have_fastchunks(av))
       malloc_consolidate(av);
   }
 
@@ -3474,55 +3474,55 @@ Void_t* mALLOc(size_t bytes)
     bins.  Note that this step is the only place in any routine where
     chunks are placed in bins.
   */
-    
+
   while ( (victim = unsorted_chunks(av)->bk) != unsorted_chunks(av)) {
     bck = victim->bk;
     size = chunksize(victim);
-    
-    /* 
+
+    /*
        If a small request, try to use last remainder if it is the
        only chunk in unsorted bin.  This helps promote locality for
        runs of consecutive small requests. This is the only
        exception to best-fit, and applies only when there is
        no exact fit for a small chunk.
     */
-    
-    if (in_smallbin_range(nb) && 
+
+    if (in_smallbin_range(nb) &&
         bck == unsorted_chunks(av) &&
         victim == av->last_remainder &&
         (CHUNK_SIZE_T)(size) > (CHUNK_SIZE_T)(nb + MINSIZE)) {
-      
+
       /* split and reattach remainder */
       remainder_size = size - nb;
       remainder = chunk_at_offset(victim, nb);
       unsorted_chunks(av)->bk = unsorted_chunks(av)->fd = remainder;
-      av->last_remainder = remainder; 
+      av->last_remainder = remainder;
       remainder->bk = remainder->fd = unsorted_chunks(av);
-      
+
       set_head(victim, nb | PREV_INUSE);
       set_head(remainder, remainder_size | PREV_INUSE);
       set_foot(remainder, remainder_size);
-      
+
       check_malloced_chunk(victim, nb);
 	  RtlReleaseSpinlock(&slmalloc_lock);
       return chunk2mem(victim);
     }
-    
+
     /* remove from unsorted list */
     unsorted_chunks(av)->bk = bck;
     bck->fd = unsorted_chunks(av);
-    
+
     /* Take now instead of binning if exact fit */
-    
+
     if (size == nb) {
       set_inuse_bit_at_offset(victim, size);
       check_malloced_chunk(victim, nb);
 	  RtlReleaseSpinlock(&slmalloc_lock);
       return chunk2mem(victim);
     }
-    
+
     /* place chunk in bin */
-    
+
     if (in_smallbin_range(size)) {
       victim_index = smallbin_index(size);
       bck = bin_at(av, victim_index);
@@ -3532,32 +3532,32 @@ Void_t* mALLOc(size_t bytes)
       victim_index = largebin_index(size);
       bck = bin_at(av, victim_index);
       fwd = bck->fd;
-      
+
       if (fwd != bck) {
         /* if smaller than smallest, place first */
         if ((CHUNK_SIZE_T)(size) < (CHUNK_SIZE_T)(bck->bk->size)) {
           fwd = bck;
           bck = bck->bk;
         }
-        else if ((CHUNK_SIZE_T)(size) >= 
+        else if ((CHUNK_SIZE_T)(size) >=
                  (CHUNK_SIZE_T)(FIRST_SORTED_BIN_SIZE)) {
-          
+
           /* maintain large bins in sorted order */
           size |= PREV_INUSE; /* Or with inuse bit to speed comparisons */
-          while ((CHUNK_SIZE_T)(size) < (CHUNK_SIZE_T)(fwd->size)) 
+          while ((CHUNK_SIZE_T)(size) < (CHUNK_SIZE_T)(fwd->size))
             fwd = fwd->fd;
           bck = fwd->bk;
         }
       }
     }
-      
+
     mark_bin(av, victim_index);
     victim->bk = bck;
     victim->fd = fwd;
     fwd->bk = victim;
     bck->fd = victim;
   }
-  
+
   /*
     If a large request, scan through the chunks of current bin to
     find one that fits.  (This will be the smallest that fits unless
@@ -3566,17 +3566,17 @@ Void_t* mALLOc(size_t bytes)
     scanned without doing anything useful with them. However the
     lists tend to be short.
   */
-  
+
   if (!in_smallbin_range(nb)) {
     bin = bin_at(av, idx);
-    
+
     for (victim = last(bin); victim != bin; victim = victim->bk) {
       size = chunksize(victim);
-      
+
       if ((CHUNK_SIZE_T)(size) >= (CHUNK_SIZE_T)(nb)) {
         remainder_size = size - nb;
         unlink(victim, bck, fwd);
-        
+
         /* Exhaust */
         if (remainder_size < MINSIZE)  {
           set_inuse_bit_at_offset(victim, size);
@@ -3595,9 +3595,9 @@ Void_t* mALLOc(size_t bytes)
           check_malloced_chunk(victim, nb);
 		  RtlReleaseSpinlock(&slmalloc_lock);
           return chunk2mem(victim);
-        } 
+        }
       }
-    }    
+    }
   }
 
   /*
@@ -3605,59 +3605,59 @@ Void_t* mALLOc(size_t bytes)
     bin. This search is strictly by best-fit; i.e., the smallest
     (with ties going to approximately the least recently used) chunk
     that fits is selected.
-    
+
     The bitmap avoids needing to check that most blocks are nonempty.
   */
-    
+
   ++idx;
   bin = bin_at(av,idx);
   block = idx2block(idx);
   map = av->binmap[block];
   bit = idx2bit(idx);
-  
+
   for (;;) {
-    
+
     /* Skip rest of block if there are no more set bits in this block.  */
     if (bit > map || bit == 0) {
       do {
         if (++block >= BINMAPSIZE)  /* out of bins */
           goto use_top;
       } while ( (map = av->binmap[block]) == 0);
-      
+
       bin = bin_at(av, (block << BINMAPSHIFT));
       bit = 1;
     }
-    
+
     /* Advance to bin with set bit. There must be one. */
     while ((bit & map) == 0) {
       bin = next_bin(bin);
       bit <<= 1;
       assert(bit != 0);
     }
-    
+
     /* Inspect the bin. It is likely to be non-empty */
     victim = last(bin);
-    
+
     /*  If a false alarm (empty bin), clear the bit. */
     if (victim == bin) {
       av->binmap[block] = map &= ~bit; /* Write through */
       bin = next_bin(bin);
       bit <<= 1;
     }
-    
+
     else {
       size = chunksize(victim);
-      
+
       /*  We know the first chunk in this bin is big enough to use. */
       assert((CHUNK_SIZE_T)(size) >= (CHUNK_SIZE_T)(nb));
-      
+
       remainder_size = size - nb;
-      
+
       /* unlink */
       bck = victim->bk;
       bin->bk = bck;
       bck->fd = bin;
-      
+
       /* Exhaust */
       if (remainder_size < MINSIZE) {
         set_inuse_bit_at_offset(victim, size);
@@ -3665,17 +3665,17 @@ Void_t* mALLOc(size_t bytes)
 		RtlReleaseSpinlock(&slmalloc_lock);
         return chunk2mem(victim);
       }
-      
+
       /* Split */
       else {
         remainder = chunk_at_offset(victim, nb);
-        
+
         unsorted_chunks(av)->bk = unsorted_chunks(av)->fd = remainder;
         remainder->bk = remainder->fd = unsorted_chunks(av);
         /* advertise as last remainder */
-        if (in_smallbin_range(nb)) 
-          av->last_remainder = remainder; 
-        
+        if (in_smallbin_range(nb))
+          av->last_remainder = remainder;
+
         set_head(victim, nb | PREV_INUSE);
         set_head(remainder, remainder_size | PREV_INUSE);
         set_foot(remainder, remainder_size);
@@ -3686,7 +3686,7 @@ Void_t* mALLOc(size_t bytes)
     }
   }
 
-  use_top:    
+  use_top:
   /*
     If large enough, split off the chunk bordering the end of memory
     (held in av->top). Note that this is in accord with the best-fit
@@ -3694,31 +3694,31 @@ Void_t* mALLOc(size_t bytes)
     less well fitting) than any other available chunk since it can
     be extended to be as large as necessary (up to system
     limitations).
-    
+
     We require that av->top always exists (i.e., has size >=
     MINSIZE) after initialization, so if it would otherwise be
     exhuasted by current request, it is replenished. (The main
     reason for ensuring it exists is that we may need MINSIZE space
     to put in fenceposts in sysmalloc.)
   */
-  
+
   victim = av->top;
   size = chunksize(victim);
-  
+
   if ((CHUNK_SIZE_T)(size) >= (CHUNK_SIZE_T)(nb + MINSIZE)) {
     remainder_size = size - nb;
     remainder = chunk_at_offset(victim, nb);
     av->top = remainder;
     set_head(victim, nb | PREV_INUSE);
     set_head(remainder, remainder_size | PREV_INUSE);
-    
+
     check_malloced_chunk(victim, nb);
 	RtlReleaseSpinlock(&slmalloc_lock);
     return chunk2mem(victim);
   }
-  
-  /* 
-     If no space in top, relay to handle system-dependent cases 
+
+  /*
+     If no space in top, relay to handle system-dependent cases
   */
   RtlReleaseSpinlock(&slmalloc_lock);
   return sYSMALLOc(nb, av);    

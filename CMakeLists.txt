@@ -61,8 +61,6 @@ add_executable(MidnightOS
         src/hal/idt/idt.inc
         src/hal/idt/raw_idt_table.c
         src/hal/idt/raw_idt_table.h
-        src/str/string.c
-        src/str/string.h
         src/rtl/dlmalloc.c
         src/rtl/dlmalloc.h
         

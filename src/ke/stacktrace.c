@@ -18,7 +18,7 @@ This is the main C file for the stacktrace component.
 #include <hal/io.h>
 #include <cpu/cpu.h>
 #include <cpuid.h>
-#include <str/string.h>
+#include <string.h>
 #include <mm/common.h>
 #include <rtl/dlmalloc.h>
 
@@ -111,7 +111,7 @@ KERNEL_API void KeWalkStack(UINT max_frames) {
         CHAR* function_name = KeStackTraceGetFunctionName(function_address);
 
         if (function_name != NULL) {
-            UINT name_length = StrLen(function_name);
+            UINT name_length = strlen(function_name);
             if (name_length > longest_name_length) {
                 longest_name_length = name_length;
             }
@@ -183,8 +183,6 @@ KERNEL_API void KeStackTraceRegDefaults() {
     KeStackTraceRegisterFunction((ULONGLONG)KeGetCallTarget, "KeGetCallTarget");
     KeStackTraceRegisterFunction((ULONGLONG)KeGetCpuName, "KeGetCpuName");
     KeStackTraceRegisterFunction((ULONGLONG)KeGetCpuVendorRaw, "KeGetCpuVendorRaw");
-    KeStackTraceRegisterFunction((ULONGLONG)StrCmp, "StrCmp");
-    KeStackTraceRegisterFunction((ULONGLONG)StrLen, "StrLen");
     KeStackTraceRegisterFunction((ULONGLONG)MmGetMemoryOffset, "MmGetMemoryOffset");
     KeStackTraceRegisterFunction((ULONGLONG)MmGetMemoryMapEntryCount, "MmGetMemoryMapEntryCount");
     KeStackTraceRegisterFunction((ULONGLONG)MmGetMemoryMapEntry, "MmGetMemoryMapEntry");

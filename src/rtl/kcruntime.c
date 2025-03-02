@@ -12,8 +12,12 @@
 #include "npf/nanoprintf.h"
 #include <kdbg/debug_print.h>
 #include <mm/physical.h>
-
+#include <mm/common.h>
 #include <stdio.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int sprintf(char *str, const char *format, ...) {
     va_list args;
@@ -39,11 +43,6 @@ int vsnprintf(char *str, size_t size, const char *format, va_list arg) {
     return npf_vsnprintf(str, size, format, arg);
 }
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void *memcpy(void *dest, const void *src, size_t n) {
     char *d = dest;
     const char *s = src;
@@ -51,6 +50,14 @@ void *memcpy(void *dest, const void *src, size_t n) {
         *d++ = *s++;
     }
     return dest;
+}
+
+int strlen(const char* s) {
+    int c = 0;
+    while (*s != '\0') {
+        c++;
+    }
+    return c;
 }
 
 void *memset(void *s, int c, size_t n) {
@@ -92,10 +99,6 @@ int memcmp(const void *s1, const void *s2, size_t n) {
 #ifdef __cplusplus
 }
 #endif
-
-
-
-#define PAGE_SIZE 4096
 
 static void* heap_end = NULL;
 static intptr_t allocated_size = 0;

@@ -15,7 +15,7 @@
 #include <hal/io.h>
 #include <ke/bugcheck.h>
 #include <rtl/dlmalloc.h>
-#include <str/string.h>
+#include <string.h>
 
 KERNEL_API void KernelMain(void) {
     // Initialize HAL component
