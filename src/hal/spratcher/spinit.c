@@ -12,8 +12,10 @@ This is the main C file for most SPRATCHER components.
 #include <cpu/cpu.h>
 #include <cpuid.h>
 #include <ke/bugcheck.h>
-
-#define SPRATCHER_ASSERT(x, y, z) if (!(x)) { KeDebugPrint("\033[31mSpratcher: %s\033[0m\n", y); } else { KeDebugPrint("Spratcher: %s\n", z); }
+#include <hal/idt/idt.h>
+#include <hal/initialize_arch.h>
+#include <mm/physical.h>
+#include <rtl/dlmalloc.h>
 
 CHAR* SpratcherCurrentStep = {0};
 
@@ -35,6 +37,7 @@ KERNEL_API void KiSpratcherInit()
         KeLowerIrql(oldIrql);
 
     if (dStatus != STATUS_SUCCESS) {
+        KeDebugPrint("Spratcher failed to initialize\n");
         KeBugCheck(BUGCHECK_UNEXPECTED_STATE);
     }
 
@@ -46,9 +49,18 @@ KERNEL_API void KiSpratcherInit()
 STATUS KiSpratcherInitStage0(void) {
     KeDebugPrint("Spratcher Init...\n");
     KeDebugPrint("Spratcher Build [%s, %s]\n", __DATE__, __TIME__);
+    KeDebugPrint("[ Init ] Spratcher is setting up CPU...\n");
+    KiInitializeHAL();
+    KeDebugPrint("[ Done ] CPU setup complete\n");
+    KeDebugPrint("[ Init ] Spratcher is initializing memory...\n");
+    KiInitializePhysicalMemoryManager();
+    KiDLMallocInitialize();
+    KeDebugPrint("[ Done ] Memory manager initialized\n");
     KeDebugPrint("[ Init ] Spratcher is preparing stack frame...\n");
     KeStackTraceInit();
     KeStackTraceRegDefaults();
+    KeDebugPrint("[ Done ] Stack frame prepared\n");
+    
     KeDebugPrint("[ Init ] Spratcher is testing extended CPU features...\n");
 
     UINT eax, ebx, ecx, edx;

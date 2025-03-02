@@ -190,7 +190,7 @@ KERNEL_API void MmSummarizeMemoryMap() {
 }
 
 KERNEL_API void KiInitializePhysicalMemoryManager() {
-    // Ensure the memory map is valid
+    KeDebugPrint("Initializing physical memory manager...\n");
     if (!KiIsMemoryMapValid()) {
         KeDebugPrint("Memory map not available.\n");
         SetLastError(STATUS_FAILURE);
@@ -236,6 +236,8 @@ KERNEL_API void KiInitializePhysicalMemoryManager() {
             }
         }
     }
+
+    KeDebugPrint("Physical memory manager initialized\n");
 }
 
 KERNEL_API STATUS MmAllocatePage(PVOID* Block) {
@@ -285,6 +287,54 @@ KERNEL_API STATUS MmAllocatePage(PVOID* Block) {
     return STATUS_OUT_OF_MEMORY;
 }
 
+KERNEL_API STATUS MmAllocatePages(PVOID *PageStart, SIZE_T PageCount)
+{
+    if (!PageStart || PageCount == 0) {
+        SetLastError(STATUS_INVALID_PARAMETER);
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    PMM_FREELIST_ENTRY prev = NULL;
+    PMM_FREELIST_ENTRY current = FreeListHead;
+
+    while (current != NULL) {
+        if (current->PageCount >= PageCount) {
+            PVOID allocated_page = (PVOID)current;
+
+            if (current->PageCount == PageCount) {
+                // Remove the block from the list
+                if (prev == NULL) {
+                    FreeListHead = current->Next;
+                } else {
+                    prev->Next = current->Next;
+                }
+            } else {
+                // Split the block: move header to next page
+                PMM_FREELIST_ENTRY new_entry =
+                    (PMM_FREELIST_ENTRY)((PUCHAR)current + (PageCount * PAGE_SIZE));
+                new_entry->PageCount = current->PageCount - PageCount;
+                new_entry->Next = current->Next;
+
+                if (prev == NULL) {
+                    FreeListHead = new_entry;
+                } else {
+                    prev->Next = new_entry;
+                }
+            }
+
+            *PageStart = allocated_page;
+            SetLastError(STATUS_SUCCESS);
+            return STATUS_SUCCESS;
+        }
+
+        prev = current;
+        current = current->Next;
+    }
+
+    SetLastError(STATUS_OUT_OF_MEMORY);
+    return STATUS_OUT_OF_MEMORY;
+}
+
 KERNEL_API void MmFreePage(PVOID Block) {
     if (!Block) {
         SetLastError(STATUS_INVALID_PARAMETER);
@@ -293,6 +343,21 @@ KERNEL_API void MmFreePage(PVOID Block) {
 
     PMM_FREELIST_ENTRY free_entry = (PMM_FREELIST_ENTRY)Block;
     free_entry->PageCount = 1;
+    free_entry->Next = FreeListHead;
+    FreeListHead = free_entry;
+
+    SetLastError(STATUS_SUCCESS);
+}
+
+KERNEL_API void MmFreePages(PVOID Page, SIZE_T PageCount)
+{
+    if (!Page || PageCount == 0) {
+        SetLastError(STATUS_INVALID_PARAMETER);
+        return;
+    }
+
+    PMM_FREELIST_ENTRY free_entry = (PMM_FREELIST_ENTRY)Page;
+    free_entry->PageCount = PageCount;
     free_entry->Next = FreeListHead;
     FreeListHead = free_entry;
 
