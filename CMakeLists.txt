@@ -47,13 +47,25 @@ add_executable(MidnightOS
         src/ke/bugcheck.h
         src/ke/stacktrace.c
         src/ke/stacktrace.h
-        src/ke/spratcher/spinit.c
-        src/ke/spratcher/spinit.h
+        src/hal/spratcher/spinit.c
+        src/hal/spratcher/spinit.h
         src/mm/physical.c
         src/mm/physical.h
         src/rtl/limine.h
         src/mm/common.c
         src/mm/common.h
+        src/hal/idt/idt.asm
+        src/hal/idt/idt.c
+        src/hal/idt/idt.h
+        src/hal/idt/isr.c
+        src/hal/idt/idt.inc
+        src/hal/idt/raw_idt_table.c
+        src/hal/idt/raw_idt_table.h
+        src/str/string.c
+        src/str/string.h
+        src/rtl/dlmalloc.c
+        src/rtl/dlmalloc.h
+        
 )
 
 # Include directories

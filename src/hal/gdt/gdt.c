@@ -3,6 +3,7 @@
 //
 
 #include "gdt.h"
+#include <kdbg/debug_print.h>
 
 struct GDT_SEGMENT_DESCRIPTOR gdt[] = {
     // NULL
@@ -39,7 +40,9 @@ struct GDT_SEGMENT_DESCRIPTOR gdt[] = {
 
 KERNEL_API void KiInitializeGDT()
 {
+    KeDebugPrint("Initializing GDT...\n");
     struct GDTR gdtr = {.Size = sizeof(gdt) - 1, .GdtAddress = (ULONGLONG)&gdt};
 
     KiFlushGDT(&gdtr);
+    KeDebugPrint("GDT initialized\n");
 }

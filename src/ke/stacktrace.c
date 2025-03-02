@@ -7,19 +7,37 @@ This is the main C file for the stacktrace component.
 */
 #include "stacktrace.h"
 #include <kdbg/debug_print.h>
-#include <ke/spratcher/spinit.h>
+#include <hal/spratcher/spinit.h>
 #include <rtl/spinlock.h>
+#include <hal/idt/idt.h>
+#include <mm/physical.h>
+#include <ke/bugcheck.h>
+#include <ke/irql.h>
+#include <ke/error.h>
+#include <hal/initialize_arch.h>
+#include <hal/io.h>
+#include <cpu/cpu.h>
+#include <cpuid.h>
+#include <str/string.h>
+#include <mm/common.h>
+#include <rtl/dlmalloc.h>
+
 
 static struct SPINLOCK slStackTrace;
-ULONGLONG FunctionAddress[25] = {0};
-CHAR* FunctionName[25] = {0};
+#define NumberOfFunctions 50
+ULONGLONG FunctionAddress[NumberOfFunctions] = {0};
+CHAR* FunctionName[NumberOfFunctions] = {0};
 extern void KernelMain(void);
+extern void KiInterruptHandler(INTERRUPT_STACK_FRAME* frame);
+extern void KiISRCommonHandler();
+extern STATUS KiSpratcherInitStage0();
+extern void* sbrk(intptr_t increment);
 
 KERNEL_API void KeStackTraceInit() {
     RtlCreateSpinLock(&slStackTrace);
 }
 void KeStackTraceRegisterFunction(ULONGLONG address, CHAR* name) {
-    for (UINT i = 0; i < 25; i++) {
+    for (UINT i = 0; i < NumberOfFunctions; i++) {
         if (FunctionAddress[i] == 0) {
             FunctionAddress[i] = address;
             FunctionName[i] = name;
@@ -31,27 +49,19 @@ void KeStackTraceRegisterFunction(ULONGLONG address, CHAR* name) {
 
 KERNEL_API CHAR* KeStackTraceGetFunctionName(ULONGLONG address) {
 
-    for (UINT i = 0; i < 25; i++) {
+    for (UINT i = 0; i < NumberOfFunctions; i++) {
         if (FunctionAddress[i] == address) {
 
             return FunctionName[i];
         }
     }
 
-    return "Private function";
+    return "Inlined function";
 }
 
-KERNEL_API void KeStackTraceRegDefaults() {
-    KeDebugPrint("Registering default functions...\n");
-    KeStackTraceRegisterFunction((ULONGLONG)KeWalkStack, "KeWalkStack");
-    KeStackTraceRegisterFunction((ULONGLONG)KeStackTraceRegisterFunction, "KeStackTraceRegisterFunction");
-    KeStackTraceRegisterFunction((ULONGLONG)KeStackTraceGetFunctionName, "KeStackTraceGetFunctionName");
-    KeStackTraceRegisterFunction((ULONGLONG)KeStackTraceRegDefaults, "KeStackTraceRegDefaults");
-    KeStackTraceRegisterFunction((ULONGLONG)KeDebugPrint, "KeDebugPrint");
-    KeStackTraceRegisterFunction((ULONGLONG)KernelMain, "KernelMain");
-    KeStackTraceRegisterFunction((ULONGLONG)KiSpratcherInit, "KiSpratcherInit");
-    KeDebugPrint("Done registering default functions\n");
-}
+
+
+
 
 KERNEL_API void KeWalkStackPre(PVOID stack_top, UINT max_frames, ULONGLONG *addresses) {
 
@@ -81,6 +91,8 @@ KERNEL_API ULONGLONG KeGetCallTarget(ULONGLONG return_address) {
     return 0; // not a CALL instruction
 }
 
+BOOL isInterruptHandler = FALSE;
+
 KERNEL_API void KeWalkStack(UINT max_frames) {
     RtlAcquireSpinlock(&slStackTrace);
     ULONGLONG addresses[max_frames];
@@ -88,24 +100,105 @@ KERNEL_API void KeWalkStack(UINT max_frames) {
 
     asm volatile ("mov %%rbp, %0" : "=r"(stack_top));
 
-    KeDebugPrint("BEGIN [STACK TRACE]\n");
+    KeDebugPrint("BEGIN [STACK TRACE]\n\n");
 
     KeWalkStackPre(stack_top, max_frames, addresses);
+    UINT longest_name_length = 0;
     for (UINT frame = 0; frame < max_frames; frame++) {
         if (addresses[frame] == 0) break;
         
         ULONGLONG function_address = KeGetCallTarget(addresses[frame]);
-
         CHAR* function_name = KeStackTraceGetFunctionName(function_address);
 
-        //test all things before printing to make sure not null
+        if (function_name != NULL) {
+            UINT name_length = StrLen(function_name);
+            if (name_length > longest_name_length) {
+                longest_name_length = name_length;
+            }
+        }
+    }
+
+    for (UINT frame = 0; frame < max_frames; frame++) {
+        if (addresses[frame] == 0) break;
+        
+        ULONGLONG function_address = KeGetCallTarget(addresses[frame]);
+        CHAR* function_name = KeStackTraceGetFunctionName(function_address);
+
         if (function_address == NULL || function_name == NULL || addresses[frame] == NULL) {
             break;
         }
 
-        KeDebugPrint("%s (0x%x%x) RETURN AT 0x%x%x\n", function_name, (UINT)(function_address >> 32), (UINT)(function_address & 0xFFFFFFFF), (UINT)(addresses[frame] >> 32), (UINT)(addresses[frame] & 0xFFFFFFFF));
+        if (isInterruptHandler == TRUE) {
+            KeDebugPrint("(Possible Cause) %-*s RETURN AT 0x%x%x\n", longest_name_length, function_name, (UINT)(addresses[frame] >> 32), (UINT)(addresses[frame] & 0xFFFFFFFF));
+            isInterruptHandler = FALSE;
+            continue;
+        }
+
+        if (function_address == (ULONGLONG)KiInterruptHandler) {
+            isInterruptHandler = TRUE;
+        }
+        KeDebugPrint("                 %-*s RETURN AT 0x%x%x\n", longest_name_length, function_name, (UINT)(addresses[frame] >> 32), (UINT)(addresses[frame] & 0xFFFFFFFF));
     }
 
-    KeDebugPrint("END [STACK TRACE]\n");
+    KeDebugPrint("\nEND [STACK TRACE]\n");
     RtlReleaseSpinlock(&slStackTrace);
+}
+
+
+KERNEL_API void KeStackTraceRegDefaults() {
+
+    /*
+    ####################################################################################
+    # NOTE: If you are registering a new function, INLINE FUNCTIONS ARE NOT SUPPORTED. #
+    ####################################################################################
+    */
+
+    KeDebugPrint("Registering default functions...\n");
+    KeStackTraceRegisterFunction((ULONGLONG)KeWalkStack, "KeWalkStack");
+    KeStackTraceRegisterFunction((ULONGLONG)KeStackTraceRegisterFunction, "KeStackTraceRegisterFunction");
+    KeStackTraceRegisterFunction((ULONGLONG)KeStackTraceGetFunctionName, "KeStackTraceGetFunctionName");
+    KeStackTraceRegisterFunction((ULONGLONG)KeStackTraceRegDefaults, "KeStackTraceRegDefaults");
+    KeStackTraceRegisterFunction((ULONGLONG)KeDebugPrint, "KeDebugPrint");
+    KeStackTraceRegisterFunction((ULONGLONG)KernelMain, "KernelMain");
+    KeStackTraceRegisterFunction((ULONGLONG)KiSpratcherInit, "KiSpratcherInit");
+    KeStackTraceRegisterFunction((ULONGLONG)KiSpratcherInitStage0, "KiSpratcherInitStage0");
+    KeStackTraceRegisterFunction((ULONGLONG)KiInterruptHandler, "KiInterruptHandler");
+    KeStackTraceRegisterFunction((ULONGLONG)KiISRCommonHandler, "KiISRCommonHandler");
+    KeStackTraceRegisterFunction((ULONGLONG)KiInitializeHAL, "KiInitializeHAL");
+    KeStackTraceRegisterFunction((ULONGLONG)KiInitializePhysicalMemoryManager, "KiInitializePhysicalMemoryManager");
+    KeStackTraceRegisterFunction((ULONGLONG)KeRaiseIrql, "KeRaiseIrql");
+    KeStackTraceRegisterFunction((ULONGLONG)KeLowerIrql, "KeLowerIrql");
+    KeStackTraceRegisterFunction((ULONGLONG)KeBugCheck, "KeBugCheck");
+    KeStackTraceRegisterFunction((ULONGLONG)KiPrintRegisters, "KiPrintRegisters");
+    KeStackTraceRegisterFunction((ULONGLONG)KiExplicitHalt, "KiExplicitHalt");
+    KeStackTraceRegisterFunction((ULONGLONG)IoCreatePortResource, "IoCreatePortResource");
+    KeStackTraceRegisterFunction((ULONGLONG)IoWritePortByte, "IoWritePortByte");
+    KeStackTraceRegisterFunction((ULONGLONG)IoDestroyPortResource, "IoDestroyPortResource");
+    KeStackTraceRegisterFunction((ULONGLONG)KiInitializeDebugConn, "KiInitializeDebugConn");
+    KeStackTraceRegisterFunction((ULONGLONG)KeLowerIrql, "KeLowerIrql");
+    KeStackTraceRegisterFunction((ULONGLONG)KeGetCurrentIrql, "KeGetCurrentIrql");
+    KeStackTraceRegisterFunction((ULONGLONG)KeDebugPrint, "KeDebugPrint");
+    KeStackTraceRegisterFunction((ULONGLONG)KeBugCheck, "KeBugCheck");
+    KeStackTraceRegisterFunction((ULONGLONG)KeWalkStackPre, "KeWalkStackPre");
+    KeStackTraceRegisterFunction((ULONGLONG)KeGetCallTarget, "KeGetCallTarget");
+    KeStackTraceRegisterFunction((ULONGLONG)KeGetCpuName, "KeGetCpuName");
+    KeStackTraceRegisterFunction((ULONGLONG)KeGetCpuVendorRaw, "KeGetCpuVendorRaw");
+    KeStackTraceRegisterFunction((ULONGLONG)StrCmp, "StrCmp");
+    KeStackTraceRegisterFunction((ULONGLONG)StrLen, "StrLen");
+    KeStackTraceRegisterFunction((ULONGLONG)MmGetMemoryOffset, "MmGetMemoryOffset");
+    KeStackTraceRegisterFunction((ULONGLONG)MmGetMemoryMapEntryCount, "MmGetMemoryMapEntryCount");
+    KeStackTraceRegisterFunction((ULONGLONG)MmGetMemoryMapEntry, "MmGetMemoryMapEntry");
+    KeStackTraceRegisterFunction((ULONGLONG)MmSummarizeMemoryMap, "MmSummarizeMemoryMap");
+    KeStackTraceRegisterFunction((ULONGLONG)malloc, "malloc");
+    KeStackTraceRegisterFunction((ULONGLONG)realloc, "realloc");
+    KeStackTraceRegisterFunction((ULONGLONG)calloc, "calloc");
+    KeStackTraceRegisterFunction((ULONGLONG)free, "free");
+    KeStackTraceRegisterFunction((ULONGLONG)memalign, "memalign");
+    KeStackTraceRegisterFunction((ULONGLONG)valloc, "valloc");
+    KeStackTraceRegisterFunction((ULONGLONG)pvalloc, "pvalloc");
+    KeStackTraceRegisterFunction((ULONGLONG)cfree, "cfree");
+    KeStackTraceRegisterFunction((ULONGLONG)independent_comalloc, "independent_comalloc");
+    KeStackTraceRegisterFunction((ULONGLONG)sbrk, "sbrk");
+
+    KeDebugPrint("Done registering default functions\n");
 }

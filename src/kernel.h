@@ -11,19 +11,38 @@
 
 #ifdef __cplusplus
 #define KERNEL_API extern "C"
-#define ASSEMBLY extern "C"
+#define ASSEMBLY // presumably there's a KERNEL_API before this
 #endif
 
 #ifndef __cplusplus
 #define KERNEL_API
-#define ASSEMBLY extern
+#define ASSEMBLY extern // presumably there's a KERNEL_API before this
 #endif
 
-#define CDECL __attribute__((cdecl))
-#define STDCALL __attribute__((stdcall))
 
 
+#define CDECL_ATTR __attribute__((cdecl))
+#define STDCALL_ATTR __attribute__((stdcall))
+#define PACKED_ATTR __attribute__((packed))
+#define NORETURN_ATTR __attribute__((noreturn))
+
+#define struct_t typedef struct
+#define union_t typedef union
+#define enum_t typedef enum
+
+// Azure's
+typedef signed char            I8;
+typedef unsigned char          U8;
+typedef short                  I16;
+typedef unsigned short         U16;
+typedef int                    I32;
+typedef unsigned int           U32;
+typedef long long              I64;
+typedef unsigned long long     U64;
+typedef float                  F32;
+typedef double                 F64;
 typedef void*                  HANDLE;
+
 typedef signed char            CHAR;
 typedef unsigned char          UCHAR;
 typedef short                  SHORT;
@@ -79,7 +98,6 @@ typedef ssize_t SSIZE_T;
 
 typedef unsigned long STATUS;
 
-
 #define STATUS_OUT_OF_MEMORY 11
 #define STATUS_ABORTED 10
 #define STATUS_NOT_SUPPORTED 9
@@ -96,8 +114,13 @@ typedef unsigned long STATUS;
 #define ALIGN_UP(ptr, align) (((uintptr_t)(ptr) + (align) - 1) & ~((align) - 1))
 #define ALIGN_DOWN(ptr, align) ((uintptr_t)(ptr) & ~((align) - 1))
 
+#ifndef __cplusplus
 #define CHECK_SIZEOF(type, expected_size) \
 _Static_assert(sizeof(type) == (expected_size), "Size check failed")
+#else // __cplusplus
+#define CHECK_SIZEOF(type, expected_size) \
+static_assert(sizeof(type) == (expected_size), "Size check failed")
+#endif // __cplusplus
 
 CHECK_SIZEOF(USHORT, 2);
 CHECK_SIZEOF(ULONG, 4);
