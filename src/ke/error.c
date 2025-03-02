@@ -20,6 +20,7 @@ KERNEL_API LPSTR StringifyError(STATUS status) {
         case STATUS_NOT_SUPPORTED:          return "STATUS_NOT_SUPPORTED";
         case STATUS_ABORTED:                return "STATUS_ABORTED";
         case STATUS_OUT_OF_MEMORY:          return "STATUS_OUT_OF_MEMORY";
+        case STATUS_ALREADY_MAPPED:         return "STATUS_ALREADY_MAPPED";
         default:                            return "STATUS_UNKNOWN_ERROR (Literally)";
     }
 }

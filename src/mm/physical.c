@@ -8,6 +8,7 @@
 #include <kdbg/debug_print.h>
 #include <ke/bugcheck.h>
 #include <ke/error.h>
+#include <rtl/spinlock.h>
 
 #include "common.h"
 
@@ -26,6 +27,9 @@ struct MM_FREELIST_ENTRY {
 };
 
 static struct MM_FREELIST_ENTRY* FreeListHead = NULL;
+
+struct SPINLOCK slAllocatePage;
+struct SPINLOCK slDeallocatePage;
 
 static BOOL KiIsMemoryMapValid() {
     return memoryMapRequest.response != NULL;
@@ -191,6 +195,11 @@ KERNEL_API void MmSummarizeMemoryMap() {
 
 KERNEL_API void KiInitializePhysicalMemoryManager() {
     KeDebugPrint("Initializing physical memory manager...\n");
+
+    // Initialize spinlocks
+    RtlCreateSpinLock(&slAllocatePage);
+    RtlCreateSpinLock(&slDeallocatePage);
+
     if (!KiIsMemoryMapValid()) {
         KeDebugPrint("Memory map not available.\n");
         SetLastError(STATUS_FAILURE);
@@ -241,8 +250,10 @@ KERNEL_API void KiInitializePhysicalMemoryManager() {
 }
 
 KERNEL_API STATUS MmAllocatePage(PVOID* Block) {
+    RtlAcquireSpinlock(&slAllocatePage);
     if (!Block) {
         SetLastError(STATUS_INVALID_PARAMETER);
+        RtlReleaseSpinlock(&slAllocatePage);
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -276,6 +287,7 @@ KERNEL_API STATUS MmAllocatePage(PVOID* Block) {
 
             *Block = allocated_page;
             SetLastError(STATUS_SUCCESS);
+            RtlReleaseSpinlock(&slAllocatePage);
             return STATUS_SUCCESS;
         }
 
@@ -284,54 +296,7 @@ KERNEL_API STATUS MmAllocatePage(PVOID* Block) {
     }
 
     SetLastError(STATUS_OUT_OF_MEMORY);
-    return STATUS_OUT_OF_MEMORY;
-}
-
-KERNEL_API STATUS MmAllocatePages(PVOID *PageStart, SIZE_T PageCount)
-{
-    if (!PageStart || PageCount == 0) {
-        SetLastError(STATUS_INVALID_PARAMETER);
-        return STATUS_INVALID_PARAMETER;
-    }
-
-    PMM_FREELIST_ENTRY prev = NULL;
-    PMM_FREELIST_ENTRY current = FreeListHead;
-
-    while (current != NULL) {
-        if (current->PageCount >= PageCount) {
-            PVOID allocated_page = (PVOID)current;
-
-            if (current->PageCount == PageCount) {
-                // Remove the block from the list
-                if (prev == NULL) {
-                    FreeListHead = current->Next;
-                } else {
-                    prev->Next = current->Next;
-                }
-            } else {
-                // Split the block: move header to next page
-                PMM_FREELIST_ENTRY new_entry =
-                    (PMM_FREELIST_ENTRY)((PUCHAR)current + (PageCount * PAGE_SIZE));
-                new_entry->PageCount = current->PageCount - PageCount;
-                new_entry->Next = current->Next;
-
-                if (prev == NULL) {
-                    FreeListHead = new_entry;
-                } else {
-                    prev->Next = new_entry;
-                }
-            }
-
-            *PageStart = allocated_page;
-            SetLastError(STATUS_SUCCESS);
-            return STATUS_SUCCESS;
-        }
-
-        prev = current;
-        current = current->Next;
-    }
-
-    SetLastError(STATUS_OUT_OF_MEMORY);
+    RtlReleaseSpinlock(&slAllocatePage);
     return STATUS_OUT_OF_MEMORY;
 }
 
@@ -341,25 +306,34 @@ KERNEL_API void MmFreePage(PVOID Block) {
         return;
     }
 
+    RtlAcquireSpinlock(&slDeallocatePage);
+
     PMM_FREELIST_ENTRY free_entry = (PMM_FREELIST_ENTRY)Block;
     free_entry->PageCount = 1;
     free_entry->Next = FreeListHead;
     FreeListHead = free_entry;
 
+    RtlReleaseSpinlock(&slDeallocatePage);
     SetLastError(STATUS_SUCCESS);
 }
 
-KERNEL_API void MmFreePages(PVOID Page, SIZE_T PageCount)
-{
-    if (!Page || PageCount == 0) {
-        SetLastError(STATUS_INVALID_PARAMETER);
-        return;
+KERNEL_API ULONGLONG MmGetHighestPhysicalAddress() {
+    SIZE_T dEntryCount = MmGetMemoryMapEntryCount();
+    struct MEMORY_MAP_ENTRY ent;
+    ULONGLONG ullHighestAddress = 0;
+
+    for (SIZE_T i = 0; i < dEntryCount; i++) {
+        STATUS status = MmGetMemoryMapEntry(&ent, i);
+        if (status != STATUS_SUCCESS) {
+            KeDebugPrint("Failure retrieving entry %zu.\n", i);
+            SetLastError(STATUS_NOT_FOUND);
+            KeBugCheck(BUGCHECK_UNRECOVERABLE_NO_MEMORY);
+        }
+
+        if (ent.Base + ent.Length > ullHighestAddress) {
+            ullHighestAddress = ent.Base + ent.Length;
+        }
     }
 
-    PMM_FREELIST_ENTRY free_entry = (PMM_FREELIST_ENTRY)Page;
-    free_entry->PageCount = PageCount;
-    free_entry->Next = FreeListHead;
-    FreeListHead = free_entry;
-
-    SetLastError(STATUS_SUCCESS);
+    return ullHighestAddress;
 }

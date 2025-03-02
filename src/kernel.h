@@ -98,6 +98,7 @@ typedef ssize_t SSIZE_T;
 
 typedef unsigned long STATUS;
 
+#define STATUS_ALREADY_MAPPED 12
 #define STATUS_OUT_OF_MEMORY 11
 #define STATUS_ABORTED 10
 #define STATUS_NOT_SUPPORTED 9

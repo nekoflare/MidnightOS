@@ -6,34 +6,36 @@
 #include <cpu/cpu.h>
 #include <kernel.h>
 #include <kdbg/debug_print.h>
-#include <ke/error.h>
 #include <ke/irql.h>
-#include <ke/stacktrace.h>
 #include <hal/spratcher/spinit.h>
-#include <mm/physical.h>
-#include <hal/initialize_arch.h>
-#include <hal/io.h>
 #include <ke/bugcheck.h>
-#include <rtl/dlmalloc.h>
 #include <string.h>
+#include <hal/initialize_arch.h>
+#include <ke/error.h>
+#include <mm/common.h>
+#include <mm/physical.h>
+#include <mm/virtual.h>
+#include <mm/vmem-allocator.h>
+#include <rtl/dlmalloc.h>
+#include <rtl/runtime.h>
 
 KERNEL_API void KernelMain(void) {
     // Initialize HAL component
     if (KeGetCurrentIrql() < HIGH_LEVEL)
         KeRaiseIrql(HIGH_LEVEL, NULL); // Ignore old IRQL
     KiInitializeDebugConn();
+    KiInitializeHAL();
+    KiInitializePhysicalMemoryManager();
+    KiInitializeVirtualMemoryAllocator();
+    MiInitializeVirtualMemory();
+    KiInitializeKernelHeap();
     KiSpratcherInit();
-    void* last_malloc = NULL;
-    for (int i = 0; i < 100; i++) {
-        last_malloc = malloc(0x1000000);
-        if (last_malloc == NULL) {
-            KeDebugPrint("Failed to allocate memory\n");
-            KeBugCheck(BUGCHECK_UNRECOVERABLE_NO_MEMORY);
-        }
-        KeDebugPrint("Allocated memory at %p\n", last_malloc);
-        
+
+    SIZE_T* Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
     }
-    
+
     KeDebugPrint("KernelMain() called\n");
     while (true) {
         KiExplicitHalt();

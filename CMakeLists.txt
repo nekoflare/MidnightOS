@@ -63,7 +63,13 @@ add_executable(MidnightOS
         src/hal/idt/raw_idt_table.h
         src/rtl/dlmalloc.c
         src/rtl/dlmalloc.h
-        
+        src/mm/virtual.c
+        src/mm/virtual.h
+        src/mm/vmem-allocator.c
+        src/mm/vmem-allocator.h
+        src/mm/paging.h
+        src/rtl/runtime.h
+
 )
 
 # Include directories

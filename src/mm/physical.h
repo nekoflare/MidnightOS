@@ -38,8 +38,7 @@ KERNEL_API void MmSummarizeMemoryMap();
 
 KERNEL_API void KiInitializePhysicalMemoryManager();
 KERNEL_API STATUS MmAllocatePage(PVOID* Page);
-KERNEL_API STATUS MmAllocatePages(PVOID* PageStart, SIZE_T PageCount);
 KERNEL_API void MmFreePage(PVOID Page);
-KERNEL_API void MmFreePages(PVOID Page, SIZE_T PageCount);
+KERNEL_API ULONGLONG MmGetHighestPhysicalAddress();
 
 #endif //PHYSICAL_H
