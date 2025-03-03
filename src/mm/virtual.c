@@ -12,25 +12,25 @@
 #include "physical.h"
 
 /* The hole will be big enough that we don't need to free it for now. */
-struct KVIRTUAL_MEMORY_DESCRIPTOR_ENTRY kernelVmde;
-PVOID kernelPageMap = NULL;
+struct KVIRTUAL_MEMORY_DESCRIPTOR_ENTRY KernelVmde;
+PVOID KernelPageMap = NULL;
 
 KERNEL_API void MiInitializeVirtualMemory() {
     PREVENT_DOUBLE_INIT
-    ULONGLONG ullHighestPhysicalAddress = MmGetHighestPhysicalAddress();
-    ULONGLONG ullHigherHalfMemoryOffset = MmGetMemoryOffset();
+    ULONGLONG HighestPhysicalAddress = MmGetHighestPhysicalAddress();
+    ULONGLONG HigherHalfMemoryOffset = MmGetMemoryOffset();
 
-    kernelVmde.Base   = ullHigherHalfMemoryOffset + ullHighestPhysicalAddress;
-    kernelVmde.Length = MmGetKernelAddressVirtual() - kernelVmde.Base;
+    KernelVmde.Base   = HigherHalfMemoryOffset + HighestPhysicalAddress;
+    KernelVmde.Length = MmGetKernelAddressVirtual() - KernelVmde.Base;
 
-    KeDebugPrint("Base address: %llx Length: %0.12f (GB)\n", kernelVmde.Base, (float)kernelVmde.Length / 1024 / 1024 / 1024);
+    KeDebugPrint("Base address: %llx Length: %0.12f (GB)\n", KernelVmde.Base, (float)KernelVmde.Length / 1024 / 1024 / 1024);
 
     // Get the kernel page map.
-    ULONGLONG ControlRegister3 = 0;
-    asm volatile("mov %%cr3, %0" : "=r"(ControlRegister3));
-    ControlRegister3 &= ~0xfff; // Get physical address
+    ULONGLONG ControlRegister = 0;
+    asm volatile("mov %%cr3, %0" : "=r"(ControlRegister));
+    ControlRegister &= ~0xfff; // Get physical address
 
-    kernelPageMap = (PVOID) ControlRegister3;
+    KernelPageMap = (PVOID) ControlRegister;
 
     KeDebugPrint("Virtual memory initialized\n");
 }
@@ -70,94 +70,94 @@ KERNEL_API STATUS MiMapPage(
     ULONGLONG PdIndex   = (((ULONGLONG)Virtual) >> 21) & 0x1FF;
     ULONGLONG PtIndex   = (((ULONGLONG)Virtual) >> 12) & 0x1FF;
 
-    ULONGLONG memOffset = MmGetMemoryOffset();
+    ULONGLONG MemoryOffset = MmGetMemoryOffset();
 
     ULONGLONG *PML4 = (ULONGLONG*)Pagemap;
-    ULONGLONG pml4Entry = PML4[Pml4Index];
+    ULONGLONG PML4Entry = PML4[Pml4Index];
     ULONGLONG *PDPT;
-    if (!(pml4Entry & VMPF_PRESENT)) {
-        PVOID newPDPT;
-        if (MmAllocatePage(&newPDPT) != STATUS_SUCCESS) {
+    if (!(PML4Entry & VMPF_PRESENT)) {
+        PVOID NewPDPT;
+        if (MmAllocatePage(&NewPDPT) != STATUS_SUCCESS) {
             SetLastError(STATUS_INSUFFICIENT_RESOURCES);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        memset((void*)((ULONGLONG)newPDPT + memOffset), 0, PAGE_SIZE);
-        ULONGLONG entry = (ULONGLONG)newPDPT;
-        entry |= VMPF_PRESENT;
+        memset((void*)((ULONGLONG)NewPDPT + MemoryOffset), 0, PAGE_SIZE);
+        ULONGLONG Entry = (ULONGLONG)NewPDPT;
+        Entry |= VMPF_PRESENT;
         if (ReadWrite)
-            entry |= VMPF_READ_WRITE;
+            Entry |= VMPF_READ_WRITE;
         if (Supervisor)
-            entry |= VMPF_SUPERVISOR;
-        PML4[Pml4Index] = entry;
-        PDPT = (ULONGLONG*)((ULONGLONG)newPDPT + memOffset);
+            Entry |= VMPF_SUPERVISOR;
+        PML4[Pml4Index] = Entry;
+        PDPT = (ULONGLONG*)((ULONGLONG)NewPDPT + MemoryOffset);
     } else {
-        PDPT = (ULONGLONG*)((pml4Entry & ~(PAGE_SIZE - 1)) + memOffset);
+        PDPT = (ULONGLONG*)((PML4Entry & ~(PAGE_SIZE - 1)) + MemoryOffset);
     }
 
-    ULONGLONG pdptEntry = PDPT[PdpIndex];
+    ULONGLONG PDPTEntry = PDPT[PdpIndex];
     ULONGLONG *PD;
-    if (!(pdptEntry & VMPF_PRESENT)) {
-        PVOID newPD;
-        if (MmAllocatePage(&newPD) != STATUS_SUCCESS) {
+    if (!(PDPTEntry & VMPF_PRESENT)) {
+        PVOID NewPD;
+        if (MmAllocatePage(&NewPD) != STATUS_SUCCESS) {
             SetLastError(STATUS_INSUFFICIENT_RESOURCES);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        memset((void*)((ULONGLONG)newPD + memOffset), 0, PAGE_SIZE);
-        ULONGLONG entry = (ULONGLONG)newPD;
-        entry |= VMPF_PRESENT;
+        memset((void*)((ULONGLONG)NewPD + MemoryOffset), 0, PAGE_SIZE);
+        ULONGLONG Entry = (ULONGLONG)NewPD;
+        Entry |= VMPF_PRESENT;
         if (ReadWrite)
-            entry |= VMPF_READ_WRITE;
+            Entry |= VMPF_READ_WRITE;
         if (Supervisor)
-            entry |= VMPF_SUPERVISOR;
-        PDPT[PdpIndex] = entry;
-        PD = (ULONGLONG*)((ULONGLONG)newPD + memOffset);
+            Entry |= VMPF_SUPERVISOR;
+        PDPT[PdpIndex] = Entry;
+        PD = (ULONGLONG*)((ULONGLONG)NewPD + MemoryOffset);
     } else {
-        PD = (ULONGLONG*)(((ULONGLONG)pdptEntry & ~(PAGE_SIZE - 1)) + memOffset);
+        PD = (ULONGLONG*)(((ULONGLONG)PDPTEntry & ~(PAGE_SIZE - 1)) + MemoryOffset);
     }
 
-    ULONGLONG pdEntry = PD[PdIndex];
+    ULONGLONG PDEntry = PD[PdIndex];
     ULONGLONG *PT;
-    if (!(pdEntry & VMPF_PRESENT)) {
-        PVOID newPT;
-        if (MmAllocatePage(&newPT) != STATUS_SUCCESS) {
+    if (!(PDEntry & VMPF_PRESENT)) {
+        PVOID NewPT;
+        if (MmAllocatePage(&NewPT) != STATUS_SUCCESS) {
             SetLastError(STATUS_INSUFFICIENT_RESOURCES);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        memset((void*)((ULONGLONG)newPT + memOffset), 0, PAGE_SIZE);
-        ULONGLONG entry = (ULONGLONG)newPT;
-        entry |= VMPF_PRESENT;
+        memset((void*)((ULONGLONG)NewPT + MemoryOffset), 0, PAGE_SIZE);
+        ULONGLONG Entry = (ULONGLONG)NewPT;
+        Entry |= VMPF_PRESENT;
         if (ReadWrite)
-            entry |= VMPF_READ_WRITE;
+            Entry |= VMPF_READ_WRITE;
         if (Supervisor)
-            entry |= VMPF_SUPERVISOR;
-        PD[PdIndex] = entry;
-        PT = (ULONGLONG*)((ULONGLONG)newPT + memOffset);
+            Entry |= VMPF_SUPERVISOR;
+        PD[PdIndex] = Entry;
+        PT = (ULONGLONG*)((ULONGLONG)NewPT + MemoryOffset);
     } else {
-        PT = (ULONGLONG*)(((ULONGLONG)pdEntry & ~(PAGE_SIZE - 1)) + memOffset);
+        PT = (ULONGLONG*)(((ULONGLONG)PDEntry & ~(PAGE_SIZE - 1)) + MemoryOffset);
     }
 
-    ULONGLONG ptEntry = PT[PtIndex];
-    if (ptEntry & VMPF_PRESENT) {
+    ULONGLONG PTEntry = PT[PtIndex];
+    if (PTEntry & VMPF_PRESENT) {
         SetLastError(STATUS_ALREADY_MAPPED);
         return STATUS_ALREADY_MAPPED;
     }
 
-    ULONGLONG finalEntry = (ULONGLONG)Physical;
-    finalEntry |= VMPF_PRESENT;
+    ULONGLONG FinalEntry = (ULONGLONG)Physical;
+    FinalEntry |= VMPF_PRESENT;
     if (ReadWrite)
-        finalEntry |= VMPF_READ_WRITE;
+        FinalEntry |= VMPF_READ_WRITE;
     if (Supervisor)
-        finalEntry |= VMPF_SUPERVISOR;
+        FinalEntry |= VMPF_SUPERVISOR;
     if (WriteThrough)
-        finalEntry |= VMPF_PAGE_WRITE_THROUGH; // VMPF_PAGE_WRITE_THROUGH.
+        FinalEntry |= VMPF_PAGE_WRITE_THROUGH;  // VMPF_PAGE_WRITE_THROUGH.
     if (CacheDisable)
-        finalEntry |= VMPF_PAGE_CACHE_DISABLE; // VMPF_PAGE_CACHE_DISABLE.
+        FinalEntry |= VMPF_PAGE_CACHE_DISABLE;  // VMPF_PAGE_CACHE_DISABLE.
     if (NoExecute)
-        finalEntry |= VMPF_NO_EXECUTE; // VMPF_NO_EXECUTE.
+        FinalEntry |= VMPF_NO_EXECUTE;          // VMPF_NO_EXECUTE.
     if (PageSizeFlag)
-        finalEntry |= VMPF_PAGE_SIZE;  // VMPF_PAGE_SIZE.
+        FinalEntry |= VMPF_PAGE_SIZE;           // VMPF_PAGE_SIZE.
 
-    PT[PtIndex] = finalEntry;
+    PT[PtIndex] = FinalEntry;
 
     MmInvalidatePages(Virtual, PAGE_SIZE);
 
@@ -182,10 +182,10 @@ KERNEL_API STATUS MmInvalidatePages(PVOID Virtual, SIZE_T Length)
         return STATUS_INVALID_PARAMETER;
         }
 
-    ULONGLONG addr = (ULONGLONG)Virtual;
-    ULONGLONG end = addr + Length;
-    for (; addr < end; addr += PAGE_SIZE) {
-        __asm__ volatile("invlpg (%0)" : : "r"((void*)addr) : "memory");
+    ULONGLONG Address = (ULONGLONG)Virtual;
+    ULONGLONG End = Address + Length;
+    for (; Address < End; Address += PAGE_SIZE) {
+        __asm__ volatile("invlpg (%0)" : : "r"((void*)Address) : "memory");
     }
 
     return STATUS_SUCCESS;
@@ -193,13 +193,13 @@ KERNEL_API STATUS MmInvalidatePages(PVOID Virtual, SIZE_T Length)
 
 
 KERNEL_API void MiGetKernelVirtualMemoryDescriptor(PKVIRTUAL_MEMORY_DESCRIPTOR_ENTRY* Descriptor) {
-    *Descriptor = &kernelVmde;
+    *Descriptor = &KernelVmde;
 }
 
 KERNEL_API void MiGetKernelPageMapAddressPhysical(PVOID* PageMap) {
-    *PageMap = kernelPageMap;
+    *PageMap = KernelPageMap;
 }
 
 KERNEL_API void MiGetKernelPageMapAddressVirtual(PVOID* PageMap) {
-    *PageMap = (kernelPageMap + MmGetMemoryOffset());
+    *PageMap = (KernelPageMap + MmGetMemoryOffset());
 }

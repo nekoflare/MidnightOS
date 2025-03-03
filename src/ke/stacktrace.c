@@ -37,6 +37,7 @@ KERNEL_API void KiStackTraceInit() {
     PREVENT_DOUBLE_INIT
     KiCreateSpinLock(&slStackTrace);
 }
+
 void KeStackTraceRegisterFunction(ULONGLONG address, CHAR* name) {
     for (UINT i = 0; i < NumberOfFunctions; i++) {
         if (FunctionAddress[i] == 0) {
@@ -58,80 +59,80 @@ KERNEL_API CHAR* KeStackTraceGetFunctionName(ULONGLONG address) {
     return "Inlined function";
 }
 
-KERNEL_API void KeWalkStackPre(PVOID stack_top, UINT max_frames, ULONGLONG *addresses) {
-    ULONGLONG* base_pointer = (ULONGLONG*)stack_top;
+KERNEL_API void KeWalkStackPre(PVOID stack_top, UINT max_frames, ULONGLONG *Addresses) {
+    ULONGLONG* BasePointer = stack_top;
     for (UINT i = 0; i < max_frames; i++) {
-        if (base_pointer == NULL) {
+        if (BasePointer == NULL) {
             break; // stop if we reach the end of the stack
         }
 
-        ULONGLONG return_address = base_pointer[1]; // get return address from the next address in the stack frame
-        addresses[i] = return_address; // store the return address in the array
+        ULONGLONG ReturnAddress = BasePointer[1]; // get return address from the next address in the stack frame
+        Addresses[i] = ReturnAddress; // store the return address in the array
 
-        base_pointer = (ULONGLONG*)base_pointer[0]; // move to the previous stack frame (previous base pointer)
+        BasePointer = (ULONGLONG*)BasePointer[0]; // move to the previous stack frame (previous base pointer)
     }
 }
 
 // check if the instruction at the given address is a CALL
 KERNEL_API ULONGLONG KeGetCallTarget(ULONGLONG return_address) {
-    UCHAR* instruction = (UCHAR*)(return_address - 5); // assume rel32 CALL first
+    UCHAR* Instruction = (UCHAR*)(return_address - 5); // assume rel32 CALL first
 
     // relative CALL instruction
-    if (instruction[0] == 0xE8) {
-        INT rel_offset = *(INT*)(instruction + 1); // 32-bit relative offset
-        return return_address + rel_offset; // function address
+    if (Instruction[0] == 0xE8) {
+        INT RelOffset = *(INT*)(Instruction + 1); // 32-bit relative offset
+        return return_address + RelOffset; // function address
     }
 
     return 0; // not a CALL instruction
 }
 
-BOOL isInterruptHandler = FALSE;
+BOOL IsInterruptHandler = FALSE;
 
-KERNEL_API void KeWalkStack(UINT max_frames) {
+KERNEL_API void KeWalkStack(UINT MAX_FRAMES) {
     KiAcquireSpinlock(&slStackTrace);
-    ULONGLONG addresses[max_frames];
-    ULONGLONG* stack_top;
+    ULONGLONG Addresses[MAX_FRAMES];
+    ULONGLONG* StackTop;
 
-    asm volatile ("mov %%rbp, %0" : "=r"(stack_top));
+    asm volatile ("mov %%rbp, %0" : "=r"(StackTop));
 
     KeDebugPrint("BEGIN [STACK TRACE]\n\n");
 
-    KeWalkStackPre(stack_top, max_frames, addresses);
-    UINT longest_name_length = 0;
-    for (UINT frame = 0; frame < max_frames; frame++) {
-        if (addresses[frame] == 0) break;
-        
-        ULONGLONG function_address = KeGetCallTarget(addresses[frame]);
-        CHAR* function_name = KeStackTraceGetFunctionName(function_address);
+    KeWalkStackPre(StackTop, MAX_FRAMES, Addresses);
+    UINT LongestNameLength = 0;
+    for (UINT FrameIndex = 0; FrameIndex < MAX_FRAMES; FrameIndex++) {
+        if (Addresses[FrameIndex] == 0) break;
 
-        if (function_name != NULL) {
-            UINT name_length = strlen(function_name);
-            if (name_length > longest_name_length) {
-                longest_name_length = name_length;
+        ULONGLONG FunctionAddress = KeGetCallTarget(Addresses[FrameIndex]);
+        CHAR* FunctionName = KeStackTraceGetFunctionName(FunctionAddress);
+
+        if (FunctionName != NULL) {
+            UINT NameLength = strlen(FunctionName);
+            if (NameLength > LongestNameLength) {
+                LongestNameLength = NameLength;
             }
         }
     }
 
-    for (UINT frame = 0; frame < max_frames; frame++) {
-        if (addresses[frame] == 0) break;
-        
-        ULONGLONG function_address = KeGetCallTarget(addresses[frame]);
-        CHAR* function_name = KeStackTraceGetFunctionName(function_address);
+    for (UINT FrameIndex = 0; FrameIndex < MAX_FRAMES; FrameIndex++) {
+        if (Addresses[FrameIndex] == 0) break;
 
-        if (function_address == NULL || function_name == NULL || addresses[frame] == NULL) {
+        ULONGLONG FunctionAddress = KeGetCallTarget(Addresses[FrameIndex]);
+        CHAR* FunctionName = KeStackTraceGetFunctionName(FunctionAddress);
+
+        if ((PVOID)FunctionAddress == NULL || FunctionName == NULL || (PVOID)Addresses[FrameIndex] == NULL) {
             break;
         }
 
-        if (isInterruptHandler == TRUE) {
-            KeDebugPrint("(Possible Cause) %-*s RETURN AT 0x%x%x\n", longest_name_length, function_name, (UINT)(addresses[frame] >> 32), (UINT)(addresses[frame] & 0xFFFFFFFF));
-            isInterruptHandler = FALSE;
+        if (IsInterruptHandler == TRUE) {
+            KeDebugPrint("(Possible Cause) %-*s RETURN AT 0x%x%x\n", LongestNameLength, FunctionName, (UINT)(Addresses[FrameIndex] >> 32), (UINT)(Addresses[FrameIndex] & 0xFFFFFFFF));
+            IsInterruptHandler = FALSE;
             continue;
         }
 
-        if (function_address == (ULONGLONG)KiInterruptHandler) {
-            isInterruptHandler = TRUE;
+        if (FunctionAddress == (ULONGLONG)KiInterruptHandler) {
+            IsInterruptHandler = TRUE;
         }
-        KeDebugPrint("                 %-*s RETURN AT 0x%x%x\n", longest_name_length, function_name, (UINT)(addresses[frame] >> 32), (UINT)(addresses[frame] & 0xFFFFFFFF));
+        KeDebugPrint("                 %-*s RETURN AT 0x%x%x\n", LongestNameLength, FunctionName, (UINT)(Addresses[FrameIndex] >> 32), (UINT)(Addresses[FrameIndex] & 0xFFFFFFFF));
     }
 
     KeDebugPrint("\nEND [STACK TRACE]\n");

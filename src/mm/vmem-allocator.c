@@ -28,21 +28,21 @@ KERNEL_API STATUS MmAllocateKernelVirtualMemory(
 
     KiAcquireSpinlock(&slAllocateKernelVirtualMemory);
     //  Get the kernel VDA.
-    PKVIRTUAL_MEMORY_DESCRIPTOR_ENTRY kernelVmde;
-    MiGetKernelVirtualMemoryDescriptor(&kernelVmde);
+    PKVIRTUAL_MEMORY_DESCRIPTOR_ENTRY KernelVmde;
+    MiGetKernelVirtualMemoryDescriptor(&KernelVmde);
 
-    if (Length >= kernelVmde->Length) {
+    if (Length >= KernelVmde->Length) {
         SetLastError(STATUS_OUT_OF_MEMORY);
         return STATUS_OUT_OF_MEMORY;
     }
 
-    ULONGLONG ullAllocatedMemory = kernelVmde->Base;
-    kernelVmde->Base += Length;
-    kernelVmde->Length -= Length;
+    ULONGLONG AllocatedMemory = KernelVmde->Base;
+    KernelVmde->Base += Length;
+    KernelVmde->Length -= Length;
 
     KiReleaseSpinlock(&slAllocateKernelVirtualMemory);
 
-    *Address = ullAllocatedMemory;
+    *Address = AllocatedMemory;
 
     SetLastError(STATUS_SUCCESS);
     return STATUS_SUCCESS;

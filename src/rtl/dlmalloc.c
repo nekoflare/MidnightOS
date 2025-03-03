@@ -234,16 +234,17 @@ int _errno = 0;  /* Just define it to make sure it exists */
 #define ENOMEM 12
 #include <rtl/spinlock.h>
 
-struct KSPINLOCK slmalloc_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct KSPINLOCK slmalloc_consolidate_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct KSPINLOCK slfree_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct KSPINLOCK slrealloc_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct KSPINLOCK slcalloc_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct KSPINLOCK slmemalign_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct KSPINLOCK slvalloc_lock = {.Lock = SPINLOCK_UNLOCKED};
+struct KSPINLOCK slmalloc_lock;
+struct KSPINLOCK slmalloc_consolidate_lock;
+struct KSPINLOCK slfree_lock;
+struct KSPINLOCK slrealloc_lock;
+struct KSPINLOCK slcalloc_lock;
+struct KSPINLOCK slmemalign_lock;
+struct KSPINLOCK slvalloc_lock;
 
 KERNEL_API void KiDLMallocInitialize()
 {
+  PREVENT_DOUBLE_INIT
 	KiCreateSpinLock(&slmalloc_lock);
 	KiCreateSpinLock(&slmalloc_consolidate_lock);
 	KiCreateSpinLock(&slfree_lock);

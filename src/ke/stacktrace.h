@@ -11,7 +11,7 @@ This is the main header for the stacktrace component.
 
 #include <kernel.h>
 KERNEL_API void KiStackTraceInit();
-KERNEL_API void KeWalkStack(UINT max_frames);
+KERNEL_API void KeWalkStack(UINT MAX_FRAMES);
 KERNEL_API void KeStackTraceRegisterFunction(ULONGLONG address, CHAR* name);
 KERNEL_API CHAR* KeStackTraceGetFunctionName(ULONGLONG address);
 KERNEL_API void KeStackTraceRegDefaults();

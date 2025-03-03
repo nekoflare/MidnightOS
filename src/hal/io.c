@@ -27,35 +27,35 @@ static BOOL KiIsIoPortWritable(
 }
 
 KERNEL_API void KiCreatePortResource(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    KIO_PORT_ATTRIBUTE ulPortAttributes,
-    USHORT usPortRangeStart,
-    USHORT usPortRangeEnd
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    KIO_PORT_ATTRIBUTE PortAttributes,
+    USHORT PortRangeStart,
+    USHORT PortRangeEnd
 )
 {
-    pPortDescriptor->PortAttributes = ulPortAttributes;
-    pPortDescriptor->PortRangeStart = usPortRangeStart;
-    pPortDescriptor->PortRangeEnd   = usPortRangeEnd;
+    PortDescriptor->PortAttributes = PortAttributes;
+    PortDescriptor->PortRangeStart = PortRangeStart;
+    PortDescriptor->PortRangeEnd   = PortRangeEnd;
 }
 
 KERNEL_API void KiDestroyPortResource(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor) {
-    pPortDescriptor->PortAttributes = 0UL;
-    pPortDescriptor->PortRangeStart = 0x0000;
-    pPortDescriptor->PortRangeEnd   = 0x0000;
+    PKIO_PORT_DESCRIPTOR PortDescriptor) {
+    PortDescriptor->PortAttributes = 0UL;
+    PortDescriptor->PortRangeStart = 0x0000;
+    PortDescriptor->PortRangeEnd   = 0x0000;
 }
 
 KERNEL_API STATUS KiWritePortByte(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    UCHAR ucValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    UCHAR Value
     ) {
-    if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+    if (!KiIsIoPortValid(PortDescriptor, Port)) {
         SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
-    if (!KiIsIoPortWritable(pPortDescriptor)) {
+    if (!KiIsIoPortWritable(PortDescriptor)) {
         SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
@@ -63,7 +63,7 @@ KERNEL_API STATUS KiWritePortByte(
     __asm__ __volatile__ (
         "outb %1, %0"
         :
-        : "dN" (usPort), "a" (ucValue)
+        : "dN" (Port), "a" (Value)
     );
 
     SetLastError(STATUS_SUCCESS);
@@ -71,45 +71,45 @@ KERNEL_API STATUS KiWritePortByte(
 }
 
 KERNEL_API STATUS KiReadPortByte(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    PUCHAR pucValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    PUCHAR Value
     ) {
-    if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+    if (!KiIsIoPortValid(PortDescriptor, Port)) {
         SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
-    if (!KiIsIoPortReadable(pPortDescriptor)) {
+    if (!KiIsIoPortReadable(PortDescriptor)) {
         SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
 
-    UCHAR ucReadValue;
+    UCHAR ReadValue;
 
     __asm__ __volatile__ (
         "inb %1, %0"
-        : "=a" (ucReadValue)
-        : "dN" (usPort)
+        : "=a" (ReadValue)
+        : "dN" (Port)
     );
 
-    *pucValue = ucReadValue;
+    *Value = ReadValue;
 
     SetLastError(STATUS_SUCCESS);
     return STATUS_SUCCESS;
 }
 
 KERNEL_API STATUS KiWritePortWord(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    USHORT usValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    USHORT Value
     ) {
-    if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+    if (!KiIsIoPortValid(PortDescriptor, Port)) {
         SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
-    if (!KiIsIoPortWritable(pPortDescriptor)) {
+    if (!KiIsIoPortWritable(PortDescriptor)) {
         SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
@@ -117,7 +117,7 @@ KERNEL_API STATUS KiWritePortWord(
     __asm__ __volatile__ (
         "outw %1, %0"
         :
-        : "dN" (usPort), "a" (usValue)
+        : "dN" (Port), "a" (Value)
     );
 
     SetLastError(STATUS_SUCCESS);
@@ -125,45 +125,45 @@ KERNEL_API STATUS KiWritePortWord(
 }
 
 KERNEL_API STATUS KiReadPortWord(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    PUSHORT pusValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    PUSHORT Value
     ) {
-    if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+    if (!KiIsIoPortValid(PortDescriptor, Port)) {
         SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
-    if (!KiIsIoPortReadable(pPortDescriptor)) {
+    if (!KiIsIoPortReadable(PortDescriptor)) {
         SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
 
-    USHORT usReadValue;
+    USHORT ReadValue;
 
     __asm__ __volatile__ (
         "inw %1, %0"
-        : "=a" (usReadValue)
-        : "dN" (usPort)
+        : "=a" (ReadValue)
+        : "dN" (Port)
     );
 
-    *pusValue = usReadValue;
+    *Value = ReadValue;
 
     SetLastError(STATUS_SUCCESS);
     return STATUS_SUCCESS;
 }
 
 KERNEL_API STATUS KiWritePortDword(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    ULONG ulValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    ULONG Value
     ) {
-    if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+    if (!KiIsIoPortValid(PortDescriptor, Port)) {
         SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
-    if (!KiIsIoPortWritable(pPortDescriptor)) {
+    if (!KiIsIoPortWritable(PortDescriptor)) {
         SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
@@ -171,7 +171,7 @@ KERNEL_API STATUS KiWritePortDword(
     __asm__ __volatile__ (
         "outl %1, %0"
         :
-        : "dN" (usPort), "a" (ulValue)
+        : "dN" (Port), "a" (Value)
     );
 
     SetLastError(STATUS_SUCCESS);
@@ -179,29 +179,29 @@ KERNEL_API STATUS KiWritePortDword(
 }
 
 KERNEL_API STATUS KiReadPortDword(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    PULONG pulValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    PULONG Value
     ) {
-    if (!KiIsIoPortValid(pPortDescriptor, usPort)) {
+    if (!KiIsIoPortValid(PortDescriptor, Port)) {
         SetLastError(STATUS_OUT_OF_BOUNDS);
         return STATUS_OUT_OF_BOUNDS;
     }
 
-    if (!KiIsIoPortReadable(pPortDescriptor)) {
+    if (!KiIsIoPortReadable(PortDescriptor)) {
         SetLastError(STATUS_DENIED);
         return STATUS_DENIED;
     }
 
-    ULONG ulReadValue;
+    ULONG ReadValue;
 
     __asm__ __volatile__ (
         "inl %1, %0"
-        : "=a" (ulReadValue)
-        : "dN" (usPort)
+        : "=a" (ReadValue)
+        : "dN" (Port)
     );
 
-    *pulValue = ulReadValue;
+    *Value = ReadValue;
 
     SetLastError(STATUS_SUCCESS);
     return STATUS_SUCCESS;

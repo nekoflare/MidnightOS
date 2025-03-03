@@ -4,7 +4,7 @@
 
 #include "error.h"
 
-static STATUS lastStatus = STATUS_SUCCESS;
+static STATUS LastStatus = STATUS_SUCCESS;
 
 KERNEL_API LPSTR StringifyError(STATUS status) {
     switch (status) {
@@ -26,9 +26,9 @@ KERNEL_API LPSTR StringifyError(STATUS status) {
 }
 
 KERNEL_API STATUS GetLastError() {
-    return lastStatus;
+    return LastStatus;
 }
 
 KERNEL_API void SetLastError(STATUS status) {
-    lastStatus = status;
+    LastStatus = status;
 }

@@ -107,38 +107,38 @@ int memcmp(const void *s1, const void *s2, size_t n) {
 #define KERNEL_HEAP_SIZE (32ULL * 1024 * 1024 * 1024)  // 32GB
 
 // These globals track our reserved and committed regions.
-static void* kernel_heap_reserved_base = NULL;
-static void* kernel_heap_reserved_end  = NULL;
-static void* kernel_heap_committed_end = NULL;
+static void* KernelHeapReservedBase = NULL;
+static void* KernelHeapReservedEnd  = NULL;
+static void* KernelHeapCommittedEnd = NULL;
 
 // This variable tracks how much of the heap has been used
-static intptr_t allocated_size = 0;
+static intptr_t AllocatedSize = 0;
 
 KERNEL_API void MiInitializeKernelHeap() {
     // Reserve 32GB of virtual memory for the kernel heap.
-    ULONGLONG reservedAddress = 0;
-    if (MmAllocateKernelVirtualMemory(&reservedAddress, KERNEL_HEAP_SIZE) != STATUS_SUCCESS) {
+    ULONGLONG ReservedAddress = 0;
+    if (MmAllocateKernelVirtualMemory(&ReservedAddress, KERNEL_HEAP_SIZE) != STATUS_SUCCESS) {
         KeDebugPrint("Failed to reserve 32GB kernel heap memory\n");
         return;
     }
-    kernel_heap_reserved_base = (void*)reservedAddress;
-    kernel_heap_reserved_end = (char*)kernel_heap_reserved_base + KERNEL_HEAP_SIZE;
+    KernelHeapReservedBase = (void*)ReservedAddress;
+    KernelHeapReservedEnd = (char*)KernelHeapReservedBase + KERNEL_HEAP_SIZE;
 
     // Commit the first page.
-    void* phys_page = NULL;
-    if (MmAllocatePage(&phys_page) != STATUS_SUCCESS) {
+    void* PhysicalPage = NULL;
+    if (MmAllocatePage(&PhysicalPage) != STATUS_SUCCESS) {
         KeDebugPrint("Failed to allocate initial physical page for kernel heap\n");
         return;
     }
-    void* pagemap = NULL;
-    MiGetKernelPageMapAddressVirtual(&pagemap);
-    MiMapPage(VMS_READ_WRITE | VMS_SUPERVISOR, 0, phys_page,
-              kernel_heap_reserved_base, pagemap);
+    void* PageMap = NULL;
+    MiGetKernelPageMapAddressVirtual(&PageMap);
+    MiMapPage(VMS_READ_WRITE | VMS_SUPERVISOR, 0, PhysicalPage,
+              KernelHeapReservedBase, PageMap);
 
     // Set committed end to one page past the reserved base.
-    kernel_heap_committed_end = (char*)kernel_heap_reserved_base + PAGE_SIZE;
+    KernelHeapCommittedEnd = (char*)KernelHeapReservedBase + PAGE_SIZE;
     KeDebugPrint("Kernel heap initialized at %p, size: %llu bytes\n",
-                 kernel_heap_reserved_base, KERNEL_HEAP_SIZE);
+                 KernelHeapReservedBase, KERNEL_HEAP_SIZE);
 }
 
 /*
@@ -150,51 +150,51 @@ KERNEL_API void MiInitializeKernelHeap() {
  */
 void* sbrk(intptr_t increment) {
     // Use a static variable to track the current break within the reserved region.
-    static void* program_break = NULL;
-    if (program_break == NULL) {
-        if (kernel_heap_reserved_base == NULL) {
+    static void* ProgramBreak = NULL;
+    if (ProgramBreak == NULL) {
+        if (KernelHeapReservedBase == NULL) {
             KeDebugPrint("sbrk: Kernel heap not initialized\n");
             return (void*)-1;
         }
-        program_break = kernel_heap_reserved_base;
+        ProgramBreak = KernelHeapReservedBase;
     }
 
     if (increment == 0) {
-        return program_break;
+        return ProgramBreak;
     }
 
     // Calculate the new break value.
-    void* new_break = (char*)program_break + increment;
+    void* NewBreak = (char*)ProgramBreak + increment;
     // Check that the new break stays within the reserved region.
-    if (new_break < kernel_heap_reserved_base || new_break > kernel_heap_reserved_end) {
-        KeDebugPrint("sbrk: Requested break %p is out of reserved heap bounds\n", new_break);
+    if (NewBreak < KernelHeapReservedBase || NewBreak > KernelHeapReservedEnd) {
+        KeDebugPrint("sbrk: Requested break %p is out of reserved heap bounds\n", NewBreak);
         return (void*)-1;
     }
 
     if (increment > 0) {
         // Commit additional pages if new_break exceeds the committed region.
-        while (new_break > kernel_heap_committed_end) {
-            void* phys_page = NULL;
-            if (MmAllocatePage(&phys_page) != STATUS_SUCCESS) {
+        while (NewBreak > KernelHeapCommittedEnd) {
+            void* PhysicalPage = NULL;
+            if (MmAllocatePage(&PhysicalPage) != STATUS_SUCCESS) {
                 KeDebugPrint("sbrk: Failed to allocate additional physical page\n");
                 return (void*)-1;
             }
-            void* pagemap = NULL;
-            MiGetKernelPageMapAddressVirtual(&pagemap);
-            MiMapPage(VMS_READ_WRITE | VMS_SUPERVISOR, 0, phys_page,
-                      kernel_heap_committed_end, pagemap);
-            kernel_heap_committed_end = (char*)kernel_heap_committed_end + PAGE_SIZE;
+            void* Pagemap = NULL;
+            MiGetKernelPageMapAddressVirtual(&Pagemap);
+            MiMapPage(VMS_READ_WRITE | VMS_SUPERVISOR, 0, PhysicalPage,
+                      KernelHeapCommittedEnd, Pagemap);
+            KernelHeapCommittedEnd = (char*)KernelHeapCommittedEnd + PAGE_SIZE;
         }
     } else {
         // Negative increment: Free pages if they are no longer needed.
-        while (((char*)kernel_heap_committed_end - (char*)new_break) >= PAGE_SIZE) {
-            kernel_heap_committed_end = (char*)kernel_heap_committed_end - PAGE_SIZE;
-            MmFreePage(kernel_heap_committed_end);
+        while (((char*)KernelHeapCommittedEnd - (char*)NewBreak) >= PAGE_SIZE) {
+            KernelHeapCommittedEnd = (char*)KernelHeapCommittedEnd - PAGE_SIZE;
+            MmFreePage(KernelHeapCommittedEnd);
         }
     }
 
-    void* old_break = program_break;
-    program_break = new_break;
-    allocated_size += increment;
-    return old_break;
+    void* OldBreak = ProgramBreak;
+    ProgramBreak = NewBreak;
+    AllocatedSize += increment;
+    return OldBreak;
 }

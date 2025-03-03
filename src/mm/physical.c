@@ -35,8 +35,8 @@ static BOOL KiIsMemoryMapValid() {
     return memoryMapRequest.response != NULL;
 }
 
-static enum KMEMORY_MAP_ENTRY_TYPE KiLimineMemoryMapEntryTypeToMDOS(uint64_t entry_type) {
-    switch (entry_type) {
+static enum KMEMORY_MAP_ENTRY_TYPE KiLimineMemoryMapEntryTypeToMDOS(uint64_t EntryType) {
+    switch (EntryType) {
         case LIMINE_MEMMAP_USABLE:                  return MMET_USABLE;
         case LIMINE_MEMMAP_RESERVED:                return MMET_RESERVED;
         case LIMINE_MEMMAP_ACPI_RECLAIMABLE:        return MMET_ACPI_RECLAIMABLE;
@@ -92,67 +92,67 @@ KERNEL_API STATUS MmGetMemoryMapEntry(
 }
 
 KERNEL_API void MmSummarizeMemoryMap() {
-    SIZE_T dEntryCount = MmGetMemoryMapEntryCount();
-    struct KMEMORY_MAP_ENTRY ent;
+    SIZE_T EntryCount = MmGetMemoryMapEntryCount();
+    struct KMEMORY_MAP_ENTRY Entry;
 
-    ULONGLONG   ullUsable = 0,
-                ullReserved = 0,
-                ullAcpiReclaimable = 0,
-                ullAcpiNvs = 0,
-                ullBad = 0,
-                ullBootloaderReclaimable = 0,
-                ullKernelAndModules = 0,
-                ullFramebuffer = 0,
-                ullOverall = 0;
+    ULONGLONG   Usable = 0,
+                Reserved = 0,
+                AcpiReclaimable = 0,
+                AcpiNvs = 0,
+                Bad = 0,
+                BootloaderReclaimable = 0,
+                KernelAndModules = 0,
+                Framebuffer = 0,
+                Overall = 0;
 
     KeDebugPrint("\n=== Memory Map Summary ===\n");
     KeDebugPrint("Index |   Base Address   |   End Address    |    Size (KB)    |              Type              \n");
     KeDebugPrint("------+------------------+------------------+-----------------+--------------------------------\n");
 
-    for (SIZE_T i = 0; i < dEntryCount; i++) {
-        STATUS status = MmGetMemoryMapEntry(&ent, i);
-        if (status != STATUS_SUCCESS) {
+    for (SIZE_T i = 0; i < EntryCount; i++) {
+        STATUS Status = MmGetMemoryMapEntry(&Entry, i);
+        if (Status != STATUS_SUCCESS) {
             KeDebugPrint("Failure retrieving entry %zu.\n", i);
             SetLastError(STATUS_NOT_FOUND);
             KeBugCheck(BUGCHECK_UNRECOVERABLE_NO_MEMORY);
         }
 
-        ULONGLONG endAddress = ent.Base + ent.Length;
-        ULONGLONG sizeInKB = ent.Length / 1024;
-        const char* typeStr = StringifyMemoryMapEntryType(ent.Type);
+        ULONGLONG EndAddress = Entry.Base + Entry.Length;
+        ULONGLONG SizeInKilobytes = Entry.Length / 1024;
+        const char* StringifiedType = StringifyMemoryMapEntryType(Entry.Type);
 
         KeDebugPrint("%4zu  |  %014llx  |  %014llx  |  %10llu KB  |  %-15s\n",
-                     i, ent.Base, endAddress, sizeInKB, typeStr);
+                     i, Entry.Base, EndAddress, SizeInKilobytes, StringifiedType);
 
         // Exclude reserved memory from overall usable count
-        if (ent.Type != MMET_RESERVED)
-            ullOverall += ent.Length;
+        if (Entry.Type != MMET_RESERVED)
+            Overall += Entry.Length;
 
         // Sum memory per type
-        switch (ent.Type) {
+        switch (Entry.Type) {
             case MMET_USABLE:
-                ullUsable += ent.Length;
+                Usable += Entry.Length;
                 break;
             case MMET_RESERVED:
-                ullReserved += ent.Length;
+                Reserved += Entry.Length;
                 break;
             case MMET_ACPI_RECLAIMABLE:
-                ullAcpiReclaimable += ent.Length;
+                AcpiReclaimable += Entry.Length;
                 break;
             case MMET_ACPI_NVS:
-                ullAcpiNvs += ent.Length;
+                AcpiNvs += Entry.Length;
                 break;
             case MMET_BAD_MEMORY:
-                ullBad += ent.Length;
+                Bad += Entry.Length;
                 break;
             case MMET_BOOTLOADER_RECLAIMABLE:
-                ullBootloaderReclaimable += ent.Length;
+                BootloaderReclaimable += Entry.Length;
                 break;
             case MMET_KERNEL_AND_MODULES:
-                ullKernelAndModules += ent.Length;
+                KernelAndModules += Entry.Length;
                 break;
             case MMET_FRAMEBUFFER:
-                ullFramebuffer += ent.Length;
+                Framebuffer += Entry.Length;
                 break;
             default:
                 break;
@@ -160,37 +160,37 @@ KERNEL_API void MmSummarizeMemoryMap() {
     }
 
     KeDebugPrint("\n=== Memory Summary ===\n");
-    KeDebugPrint("Total Usable Memory:           %10llu KB\n", ullUsable / 1024);
-    KeDebugPrint("Reserved Memory:               %10llu KB\n", ullReserved / 1024);
-    KeDebugPrint("ACPI Reclaimable Memory:       %10llu KB\n", ullAcpiReclaimable / 1024);
-    KeDebugPrint("ACPI NVS Memory:               %10llu KB\n", ullAcpiNvs / 1024);
-    KeDebugPrint("Bad Memory:                    %10llu KB\n", ullBad / 1024);
-    KeDebugPrint("Bootloader Reclaimable Memory: %10llu KB\n", ullBootloaderReclaimable / 1024);
-    KeDebugPrint("Kernel and Modules:            %10llu KB\n", ullKernelAndModules / 1024);
-    KeDebugPrint("Framebuffer Memory:            %10llu KB\n", ullFramebuffer / 1024);
+    KeDebugPrint("Total Usable Memory:           %10llu KB\n", Usable / 1024);
+    KeDebugPrint("Reserved Memory:               %10llu KB\n", Reserved / 1024);
+    KeDebugPrint("ACPI Reclaimable Memory:       %10llu KB\n", AcpiReclaimable / 1024);
+    KeDebugPrint("ACPI NVS Memory:               %10llu KB\n", AcpiNvs / 1024);
+    KeDebugPrint("Bad Memory:                    %10llu KB\n", Bad / 1024);
+    KeDebugPrint("Bootloader Reclaimable Memory: %10llu KB\n", BootloaderReclaimable / 1024);
+    KeDebugPrint("Kernel and Modules:            %10llu KB\n", KernelAndModules / 1024);
+    KeDebugPrint("Framebuffer Memory:            %10llu KB\n", Framebuffer / 1024);
     KeDebugPrint("=========================================\n");
-    KeDebugPrint("Overall Usable Memory:         %10llu KB\n", ullOverall / 1024);
+    KeDebugPrint("Overall Usable Memory:         %10llu KB\n", Overall / 1024);
 
     // Convert sizes to percentages
-    double dOverallMB = (double)ullOverall / (1024 * 1024);
-    double dUsablePerc = ((double)ullUsable / ullOverall) * 100.0;
-    double dAcpiReclaimablePerc = ((double)ullAcpiReclaimable / ullOverall) * 100.0;
-    double dAcpiNvsPerc = ((double)ullAcpiNvs / ullOverall) * 100.0;
-    double dBadPerc = ((double)ullBad / ullOverall) * 100.0;
-    double dBootloaderReclaimablePerc = ((double)ullBootloaderReclaimable / ullOverall) * 100.0;
-    double dKernelAndModulesPerc = ((double)ullKernelAndModules / ullOverall) * 100.0;
-    double dFramebufferPerc = ((double)ullFramebuffer / ullOverall) * 100.0;
+    double OverallMB = (double)Overall / (1024 * 1024);
+    double UsablePerc = ((double)Usable / Overall) * 100.0;
+    double AcpiReclaimablePerc = ((double)AcpiReclaimable / Overall) * 100.0;
+    double AcpiNvsPerc = ((double)AcpiNvs / Overall) * 100.0;
+    double BadPerc = ((double)Bad / Overall) * 100.0;
+    double BootloaderReclaimablePerc = ((double)BootloaderReclaimable / Overall) * 100.0;
+    double KernelAndModulesPerc = ((double)KernelAndModules / Overall) * 100.0;
+    double FramebufferPerc = ((double)Framebuffer / Overall) * 100.0;
 
     KeDebugPrint("\n=== Memory Summary (Excluding Reserved) ===\n");
-    KeDebugPrint("Total Usable Memory:           %10llu KB (%.6f%%)\n", ullUsable / 1024, dUsablePerc);
-    KeDebugPrint("ACPI Reclaimable Memory:       %10llu KB (%.6f%%)\n", ullAcpiReclaimable / 1024, dAcpiReclaimablePerc);
-    KeDebugPrint("ACPI NVS Memory:               %10llu KB (%.6f%%)\n", ullAcpiNvs / 1024, dAcpiNvsPerc);
-    KeDebugPrint("Bad Memory:                    %10llu KB (%.6f%%)\n", ullBad / 1024, dBadPerc);
-    KeDebugPrint("Bootloader Reclaimable Memory: %10llu KB (%.6f%%)\n", ullBootloaderReclaimable / 1024, dBootloaderReclaimablePerc);
-    KeDebugPrint("Kernel and Modules:            %10llu KB (%.6f%%)\n", ullKernelAndModules / 1024, dKernelAndModulesPerc);
-    KeDebugPrint("Framebuffer Memory:            %10llu KB (%.6f%%)\n", ullFramebuffer / 1024, dFramebufferPerc);
+    KeDebugPrint("Total Usable Memory:           %10llu KB (%.6f%%)\n", Usable / 1024, UsablePerc);
+    KeDebugPrint("ACPI Reclaimable Memory:       %10llu KB (%.6f%%)\n", AcpiReclaimable / 1024, AcpiReclaimablePerc);
+    KeDebugPrint("ACPI NVS Memory:               %10llu KB (%.6f%%)\n", AcpiNvs / 1024, AcpiNvsPerc);
+    KeDebugPrint("Bad Memory:                    %10llu KB (%.6f%%)\n", Bad / 1024, BadPerc);
+    KeDebugPrint("Bootloader Reclaimable Memory: %10llu KB (%.6f%%)\n", BootloaderReclaimable / 1024, BootloaderReclaimablePerc);
+    KeDebugPrint("Kernel and Modules:            %10llu KB (%.6f%%)\n", KernelAndModules / 1024, KernelAndModulesPerc);
+    KeDebugPrint("Framebuffer Memory:            %10llu KB (%.6f%%)\n", Framebuffer / 1024, FramebufferPerc);
     KeDebugPrint("===========================================\n");
-    KeDebugPrint("Overall Usable Memory:         %.2f MB\n", dOverallMB);
+    KeDebugPrint("Overall Usable Memory:         %.2f MB\n", OverallMB);
 }
 
 KERNEL_API void KiInitializePhysicalMemoryManager() {
@@ -208,41 +208,41 @@ KERNEL_API void KiInitializePhysicalMemoryManager() {
     }
 
     FreeListHead = NULL;
-    SIZE_T dEntryCount = MmGetMemoryMapEntryCount();
-    struct KMEMORY_MAP_ENTRY ent;
+    SIZE_T EntryCount = MmGetMemoryMapEntryCount();
+    struct KMEMORY_MAP_ENTRY Entry;
 
-    for (SIZE_T i = 0; i < dEntryCount; i++) {
-        STATUS status = MmGetMemoryMapEntry(&ent, i);
-        if (status != STATUS_SUCCESS) {
+    for (SIZE_T i = 0; i < EntryCount; i++) {
+        STATUS Status = MmGetMemoryMapEntry(&Entry, i);
+        if (Status != STATUS_SUCCESS) {
             KeDebugPrint("Failure retrieving entry %zu.\n", i);
             SetLastError(STATUS_NOT_FOUND);
             KeBugCheck(BUGCHECK_UNRECOVERABLE_NO_MEMORY);
         }
 
-        if (ent.Type == MMET_USABLE) {
-            ULONGLONG base = ent.Base;
-            ULONGLONG length = ent.Length;
+        if (Entry.Type == MMET_USABLE) {
+            ULONGLONG Base = Entry.Base;
+            ULONGLONG Length = Entry.Length;
 
             // First full page starts at the next page boundary after base
-            ULONGLONG start_page_index = (base + PAGE_SIZE - 1) / PAGE_SIZE;
-            ULONGLONG start_address = start_page_index * PAGE_SIZE;
+            ULONGLONG StartPageIndex = (Base + PAGE_SIZE - 1) / PAGE_SIZE;
+            ULONGLONG StartAddress = StartPageIndex * PAGE_SIZE;
 
             // Last full page ends before or at base + length
-            ULONGLONG end_page_index = (base + length - 1) / PAGE_SIZE;
-            ULONGLONG end_address = end_page_index * PAGE_SIZE + PAGE_SIZE;
+            ULONGLONG EndPageIndex = (Base + Length - 1) / PAGE_SIZE;
+            ULONGLONG EndAddress = EndPageIndex * PAGE_SIZE + PAGE_SIZE;
 
             // Check if there are full pages within the region
-            if (start_address < base + length && start_address < end_address) {
-                SIZE_T page_count = (end_page_index - start_page_index + 1);
+            if (StartAddress < Base + Length && StartAddress < EndAddress) {
+                SIZE_T PageCount = (EndPageIndex - StartPageIndex + 1);
 
                 // Place the free list entry at the start of the block
-                PMM_FREELIST_ENTRY free_entry = (PMM_FREELIST_ENTRY)start_address;
-                free_entry->PageCount = page_count;
-                free_entry->Next = FreeListHead;
-                FreeListHead = free_entry;
+                PMM_FREELIST_ENTRY FreeEntry = (PMM_FREELIST_ENTRY)StartAddress;
+                FreeEntry->PageCount = PageCount;
+                FreeEntry->Next = FreeListHead;
+                FreeListHead = FreeEntry;
 
                 KeDebugPrint("Added free block at %p with %zu pages\n",
-                             (PVOID)start_address, page_count);
+                             (PVOID)StartAddress, PageCount);
             }
         }
     }

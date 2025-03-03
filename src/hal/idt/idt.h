@@ -9,8 +9,8 @@
 
 struct KIDTR
 {
-    USHORT limit;
-    ULONGLONG idt_address;
+    USHORT Limit;
+    ULONGLONG Address;
 } __attribute__((packed));
 
 struct KGATE_DESCRIPTOR_64
@@ -40,7 +40,7 @@ struct KGATE_DESCRIPTOR_64
 
 struct KGATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_selector, uint8_t gate_type, uint8_t dpl_layer, uint8_t is_present, uint8_t ist);
 
-extern volatile struct KGATE_DESCRIPTOR_64 idt[256];
+extern volatile struct KGATE_DESCRIPTOR_64 Idt[256];
 
 void KiInitializeIDT();
 void KiPrintRegisters(const INTERRUPT_STACK_FRAME *regs);

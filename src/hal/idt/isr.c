@@ -5,7 +5,7 @@
 #include <ke/stacktrace.h>
 
 #include "interrupt_stackf.h"
-const char *exception_strings[32] = {"(#DE) Division Error",
+const char *ExceptionStrings[32] = {"(#DE) Division Error",
     "(#DB) Debug",
     "(#--) Non-maskable Interrupt",
     "(#BP) Breakpoint",
@@ -39,9 +39,9 @@ const char *exception_strings[32] = {"(#DE) Division Error",
     "(#--) Reserved"};
 /* ISR Handler */
 void KiInterruptHandler(INTERRUPT_STACK_FRAME* frame) {
-    if (frame->interrupt_number < 32) {
+    if (frame->InterruptNumber < 32) {
         KeDebugPrint("[-------------------- FATAL ERROR --------------------]\n");
-        KeDebugPrint("Interrupt: %s\n", exception_strings[frame->interrupt_number]);
+        KeDebugPrint("Interrupt: %s\n", ExceptionStrings[frame->InterruptNumber]);
         KiPrintRegisters(frame);
         
         

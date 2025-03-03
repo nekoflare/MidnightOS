@@ -10,7 +10,7 @@
 
 KERNEL_API void KiDebugConnPuts(LPSTR lpszMsg);
 
-#define DEBUG_CONN_IO_PORT 0xE9
+#define DEBUG_PORT 0xE9
 
 static struct KSPINLOCK slDebugPrint;
 static struct KIO_PORT_DESCRIPTOR ipdDebugPort;
@@ -26,7 +26,7 @@ KERNEL_API void KiDebugConnPuts(LPSTR lpszMsg)
 KERNEL_API void KiInitializeDebugPort() {
     PREVENT_DOUBLE_INIT
     KiCreateSpinLock(&slDebugPrint);
-    KiCreatePortResource(&ipdDebugPort, IOP_ATTRIBUTE_WRITABLE, DEBUG_CONN_IO_PORT, DEBUG_CONN_IO_PORT);
+    KiCreatePortResource(&ipdDebugPort, IOP_ATTRIBUTE_WRITABLE, DEBUG_PORT, DEBUG_PORT);
 }
 
 KERNEL_API void KeDebugPrint(LPSTR lpszMsg, ...) {
@@ -36,9 +36,9 @@ KERNEL_API void KeDebugPrint(LPSTR lpszMsg, ...) {
     va_start(args, lpszMsg);
 
     // Format the log message.
-    char message_buffer[1024];
-    vsnprintf(message_buffer, sizeof(message_buffer), lpszMsg, args);
-    KiDebugConnPuts(message_buffer);
+    CHAR MessageBuffer[1024];
+    vsnprintf(MessageBuffer, sizeof(MessageBuffer), lpszMsg, args);
+    KiDebugConnPuts(MessageBuffer);
 
     va_end(args);
     KiReleaseSpinlock(&slDebugPrint);
@@ -49,9 +49,9 @@ KERNEL_API void KeDebugPrintNoSync(LPSTR lpszMsg, ...) {
     va_start(args, lpszMsg);
 
     // Format the log message.
-    char message_buffer[1024];
-    vsnprintf(message_buffer, sizeof(message_buffer), lpszMsg, args);
-    KiDebugConnPuts(message_buffer);
+    CHAR MessageBuffer[1024];
+    vsnprintf(MessageBuffer, sizeof(MessageBuffer), lpszMsg, args);
+    KiDebugConnPuts(MessageBuffer);
 
     va_end(args);
 }

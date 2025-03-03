@@ -4,21 +4,21 @@
 #include "raw_idt_table.h"
 
 
-static inline ULONGLONG read_cr2()
+static ULONGLONG KiReadControlRegister2()
 {
     ULONGLONG cr2;
     asm volatile("mov %%cr2, %0" : "=r"(cr2));
     return cr2;
 }
 
-static void print_page_fault_info(const INTERRUPT_STACK_FRAME *regs)
+static void KiPrintPageFaultInfo(const INTERRUPT_STACK_FRAME *regs)
 {
     // Print the faulting address from CR2
-    ULONGLONG faulting_address = read_cr2();
+    ULONGLONG faulting_address = KiReadControlRegister2();
     KeDebugPrint("Linear address where the issue happened: %016lX\n", faulting_address);
 
     // Decode the error code
-    UINT error_code = regs->error_code;
+    UINT error_code = regs->ErrorCode;
 
     KeDebugPrint("The error has been caused by: ");
 
@@ -77,7 +77,7 @@ static void print_page_fault_info(const INTERRUPT_STACK_FRAME *regs)
     KeDebugPrint("\n");
 }
 
-static void print_processor_flags(const ULONGLONG rflags)
+static void KiPrintProcessorFlags(const ULONGLONG rflags)
 {
     if (rflags & 0x00000001)
         KeDebugPrint("CF ");
@@ -116,27 +116,27 @@ static void print_processor_flags(const ULONGLONG rflags)
 
 void KiPrintRegisters(const INTERRUPT_STACK_FRAME *regs)
 {
-    KeDebugPrint("RAX: %016lX RBX: %016lX RCX: %016lX RDX: %016lX\n", regs->rax, regs->rbx, regs->rcx, regs->rdx);
-    KeDebugPrint("RSI: %016lX RDI: %016lX RBP: %016lX RSP: %016lX\n", regs->rsi, regs->rdi, regs->rbp, regs->rsp);
-    KeDebugPrint("R8:  %016lX R9:  %016lX R10: %016lX R11: %016lX\n", regs->r8, regs->r9, regs->r10, regs->r11);
-    KeDebugPrint("R12: %016lX R13: %016lX R14: %016lX R15: %016lX\n", regs->r12, regs->r13, regs->r14, regs->r15);
-    KeDebugPrint("DR0: %016lX DR1: %016lX DR2: %016lX DR3: %016lX\n", regs->dr0, regs->dr1, regs->dr2, regs->dr3);
-    KeDebugPrint("DR4: %016lX DR5: %016lX DR6: %016lX DR7: %016lX\n", regs->dr4, regs->dr5, regs->dr6, regs->dr7);
-    KeDebugPrint("CR0: %016lX CR2: %016lX CR3: %016lX CR4: %016lX CR8: %016lX\n", regs->cr0, regs->cr2, regs->cr3,
-                regs->cr4, regs->cr8);
-    KeDebugPrint("CS:  %02lX  DS:  %02lX  SS:  %02lX  ES:  %02lX  FS:  %02lX GS: %02lX\n", regs->cs, regs->ds, regs->ss,
-                regs->es, regs->fs, regs->gs);
-    KeDebugPrint("RIP: %016lX\n", regs->rip);
-    KeDebugPrint("Orig RSP: %016lX CR3: %016lX\n", regs->orig_rsp, regs->cr3);
-    KeDebugPrint("Error code: %016lX Interrupt index: %016lX\n", regs->error_code, regs->interrupt_number);
+    KeDebugPrint("RAX: %016lX RBX: %016lX RCX: %016lX RDX: %016lX\n", regs->RAX, regs->RBX, regs->RCX, regs->RDX);
+    KeDebugPrint("RSI: %016lX RDI: %016lX RBP: %016lX RSP: %016lX\n", regs->RSI, regs->RDI, regs->RBP, regs->RSP);
+    KeDebugPrint("R8:  %016lX R9:  %016lX R10: %016lX R11: %016lX\n", regs->R8, regs->R9, regs->R10, regs->R11);
+    KeDebugPrint("R12: %016lX R13: %016lX R14: %016lX R15: %016lX\n", regs->R12, regs->R13, regs->R14, regs->R15);
+    KeDebugPrint("DR0: %016lX DR1: %016lX DR2: %016lX DR3: %016lX\n", regs->DR0, regs->DR1, regs->DR2, regs->DR3);
+    KeDebugPrint("DR4: %016lX DR5: %016lX DR6: %016lX DR7: %016lX\n", regs->DR4, regs->DR5, regs->DR6, regs->DR7);
+    KeDebugPrint("CR0: %016lX CR2: %016lX CR3: %016lX CR4: %016lX CR8: %016lX\n", regs->CR0, regs->CR2, regs->CR3,
+                regs->CR4, regs->CR8);
+    KeDebugPrint("CS:  %02lX  DS:  %02lX  SS:  %02lX  ES:  %02lX  FS:  %02lX GS: %02lX\n", regs->CS, regs->DS, regs->SS,
+                regs->ES, regs->FS, regs->GS);
+    KeDebugPrint("RIP: %016lX\n", regs->RIP);
+    KeDebugPrint("Orig RSP: %016lX CR3: %016lX\n", regs->OriginalRSP, regs->CR3);
+    KeDebugPrint("Error code: %016lX Interrupt index: %016lX\n", regs->ErrorCode, regs->InterruptNumber);
     KeDebugPrint("RFLAGS: ");
-    print_processor_flags(regs->rflags);
+    KiPrintProcessorFlags(regs->RFLAGS);
 }
 
 
 struct KGATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_selector, uint8_t gate_type, uint8_t dpl_layer, uint8_t is_present, uint8_t ist)
 {
-    struct KGATE_DESCRIPTOR_64 a = {
+    struct KGATE_DESCRIPTOR_64 IDTEntry = {
         .OffsetLow = (uint16_t)((uint64_t)offset & 0xFFFF),
         .SegmentSelector = segment_selector,
         .IST = ist,
@@ -150,7 +150,7 @@ struct KGATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_s
         .ReservedHigh = 0
     };
 
-    return a;
+    return IDTEntry;
 }
 
 extern void KiLoadIDTTable(struct KIDTR *idtr);
@@ -160,11 +160,11 @@ void KiInitializeIDT()
     PREVENT_DOUBLE_INIT
 
     KeDebugPrint("Initializing IDT\n");
-    struct KIDTR idt_register = {0};
-    idt_register.limit = sizeof(idt) - 1;
-    idt_register.idt_address = (ULONGLONG)&idt;
+    struct KIDTR IdtRegister = {0};
+    IdtRegister.Limit = sizeof(Idt) - 1;
+    IdtRegister.Address = (ULONGLONG)&Idt;
     KiLoadIDTTableEntries();
-    KiLoadIDTTable(&idt_register);
+    KiLoadIDTTable(&IdtRegister);
 
     asm volatile("sti");
     KeDebugPrint("IDT initialized\n");

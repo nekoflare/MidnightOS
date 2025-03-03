@@ -24,49 +24,49 @@ struct KIO_PORT_DESCRIPTOR {
 typedef struct KIO_PORT_DESCRIPTOR* PKIO_PORT_DESCRIPTOR;
 
 KERNEL_API void KiCreatePortResource(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    KIO_PORT_ATTRIBUTE ulPortAttributes,
-    USHORT usPortRangeStart,
-    USHORT usPortRangeEnd
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    KIO_PORT_ATTRIBUTE PortAttributes,
+    USHORT PortRangeStart,
+    USHORT PortRangeEnd
     );
 
 KERNEL_API void KiDestroyPortResource(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor);
+    PKIO_PORT_DESCRIPTOR PortDescriptor);
 
 KERNEL_API STATUS KiWritePortByte(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    UCHAR ucValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    UCHAR Value
     );
 
 KERNEL_API STATUS KiReadPortByte(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    PUCHAR pucValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    PUCHAR Value
     );
 
 KERNEL_API STATUS KiWritePortWord(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    USHORT usValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    USHORT Value
     );
 
 KERNEL_API STATUS KiReadPortWord(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    PUSHORT pusValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    PUSHORT Value
     );
 
 KERNEL_API STATUS KiWritePortDword(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    ULONG ulValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    ULONG Value
     );
 
 KERNEL_API STATUS KiReadPortDword(
-    PKIO_PORT_DESCRIPTOR pPortDescriptor,
-    USHORT usPort,
-    PULONG pulValue
+    PKIO_PORT_DESCRIPTOR PortDescriptor,
+    USHORT Port,
+    PULONG Value
     );
 
 #endif //IO_H
