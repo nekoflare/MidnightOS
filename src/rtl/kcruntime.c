@@ -196,6 +196,5 @@ void* sbrk(intptr_t increment) {
     void* old_break = program_break;
     program_break = new_break;
     allocated_size += increment;
-    KeDebugPrint("sbrk: old break %p, new break %p\n", old_break, program_break);
     return old_break;
 }
