@@ -6,13 +6,13 @@
 
 #include <ke/irql.h>
 
-KERNEL_API void RtlCreateSpinLock(
-    PSPINLOCK Spinlock) {
+KERNEL_API void KiCreateSpinLock(
+    PKSPINLOCK Spinlock) {
     Spinlock->Lock = SPINLOCK_UNLOCKED;
 }
 
-KERNEL_API void RtlAcquireSpinlock(
-    PSPINLOCK Spinlock) {
+KERNEL_API void KiAcquireSpinlock(
+    PKSPINLOCK Spinlock) {
     KIRQL CurrentIrql;
     KIRQL OldIrql = 0;
     
@@ -32,7 +32,7 @@ KERNEL_API void RtlAcquireSpinlock(
 }
 
 
-KERNEL_API void RtlReleaseSpinlock(
-    PSPINLOCK Spinlock) {
+KERNEL_API void KiReleaseSpinlock(
+    PKSPINLOCK Spinlock) {
     Spinlock->Lock = SPINLOCK_UNLOCKED;
 }

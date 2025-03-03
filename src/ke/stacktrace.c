@@ -23,7 +23,7 @@ This is the main C file for the stacktrace component.
 #include <rtl/dlmalloc.h>
 
 
-static struct SPINLOCK slStackTrace;
+static struct KSPINLOCK slStackTrace;
 #define NumberOfFunctions 50
 ULONGLONG FunctionAddress[NumberOfFunctions] = {0};
 CHAR* FunctionName[NumberOfFunctions] = {0};
@@ -33,8 +33,9 @@ extern void KiISRCommonHandler();
 extern STATUS KiSpratcherInitStage0();
 extern void* sbrk(intptr_t increment);
 
-KERNEL_API void KeStackTraceInit() {
-    RtlCreateSpinLock(&slStackTrace);
+KERNEL_API void KiStackTraceInit() {
+    PREVENT_DOUBLE_INIT
+    KiCreateSpinLock(&slStackTrace);
 }
 void KeStackTraceRegisterFunction(ULONGLONG address, CHAR* name) {
     for (UINT i = 0; i < NumberOfFunctions; i++) {
@@ -44,14 +45,12 @@ void KeStackTraceRegisterFunction(ULONGLONG address, CHAR* name) {
             break;
         }
     }
-
 }
 
 KERNEL_API CHAR* KeStackTraceGetFunctionName(ULONGLONG address) {
 
     for (UINT i = 0; i < NumberOfFunctions; i++) {
         if (FunctionAddress[i] == address) {
-
             return FunctionName[i];
         }
     }
@@ -59,12 +58,7 @@ KERNEL_API CHAR* KeStackTraceGetFunctionName(ULONGLONG address) {
     return "Inlined function";
 }
 
-
-
-
-
 KERNEL_API void KeWalkStackPre(PVOID stack_top, UINT max_frames, ULONGLONG *addresses) {
-
     ULONGLONG* base_pointer = (ULONGLONG*)stack_top;
     for (UINT i = 0; i < max_frames; i++) {
         if (base_pointer == NULL) {
@@ -94,7 +88,7 @@ KERNEL_API ULONGLONG KeGetCallTarget(ULONGLONG return_address) {
 BOOL isInterruptHandler = FALSE;
 
 KERNEL_API void KeWalkStack(UINT max_frames) {
-    RtlAcquireSpinlock(&slStackTrace);
+    KiAcquireSpinlock(&slStackTrace);
     ULONGLONG addresses[max_frames];
     ULONGLONG* stack_top;
 
@@ -141,7 +135,7 @@ KERNEL_API void KeWalkStack(UINT max_frames) {
     }
 
     KeDebugPrint("\nEND [STACK TRACE]\n");
-    RtlReleaseSpinlock(&slStackTrace);
+    KiReleaseSpinlock(&slStackTrace);
 }
 
 
@@ -152,6 +146,8 @@ KERNEL_API void KeStackTraceRegDefaults() {
     # NOTE: If you are registering a new function, INLINE FUNCTIONS ARE NOT SUPPORTED. #
     ####################################################################################
     */
+
+    PREVENT_DOUBLE_INIT
 
     KeDebugPrint("Registering default functions...\n");
     KeStackTraceRegisterFunction((ULONGLONG)KeWalkStack, "KeWalkStack");
@@ -171,9 +167,9 @@ KERNEL_API void KeStackTraceRegDefaults() {
     KeStackTraceRegisterFunction((ULONGLONG)KeBugCheck, "KeBugCheck");
     KeStackTraceRegisterFunction((ULONGLONG)KiPrintRegisters, "KiPrintRegisters");
     KeStackTraceRegisterFunction((ULONGLONG)KiExplicitHalt, "KiExplicitHalt");
-    KeStackTraceRegisterFunction((ULONGLONG)IoCreatePortResource, "IoCreatePortResource");
-    KeStackTraceRegisterFunction((ULONGLONG)IoWritePortByte, "IoWritePortByte");
-    KeStackTraceRegisterFunction((ULONGLONG)IoDestroyPortResource, "IoDestroyPortResource");
+    KeStackTraceRegisterFunction((ULONGLONG)KiCreatePortResource, "IoCreatePortResource");
+    KeStackTraceRegisterFunction((ULONGLONG)KiWritePortByte, "IoWritePortByte");
+    KeStackTraceRegisterFunction((ULONGLONG)KiDestroyPortResource, "IoDestroyPortResource");
     KeStackTraceRegisterFunction((ULONGLONG)KiInitializeDebugPort, "KiInitializeDebugConn");
     KeStackTraceRegisterFunction((ULONGLONG)KeLowerIrql, "KeLowerIrql");
     KeStackTraceRegisterFunction((ULONGLONG)KeGetCurrentIrql, "KeGetCurrentIrql");

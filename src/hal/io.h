@@ -7,64 +7,64 @@
 
 #include <kernel.h>
 
-typedef ULONG IO_PORT_ATTRIBUTE;
-typedef IO_PORT_ATTRIBUTE* PIO_PORT_ATTRIBUTE;
+typedef ULONG KIO_PORT_ATTRIBUTE;
+typedef KIO_PORT_ATTRIBUTE* PKIO_PORT_ATTRIBUTE;
 
-enum IO_PORT_ATTRIBUTES {
+enum KIO_PORT_ATTRIBUTES {
     IOP_ATTRIBUTE_READABLE = 1 << 0,
     IOP_ATTRIBUTE_WRITABLE = 1 << 1
 };
 
-struct IO_PORT_DESCRIPTOR {
+struct KIO_PORT_DESCRIPTOR {
     USHORT PortRangeStart;
     USHORT PortRangeEnd;
-    enum IO_PORT_ATTRIBUTES PortAttributes;
+    enum KIO_PORT_ATTRIBUTES PortAttributes;
 };
 
-typedef struct IO_PORT_DESCRIPTOR* PIO_PORT_DESCRIPTOR;
+typedef struct KIO_PORT_DESCRIPTOR* PKIO_PORT_DESCRIPTOR;
 
-KERNEL_API void IoCreatePortResource(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
-    enum IO_PORT_ATTRIBUTES ulPortAttributes,
+KERNEL_API void KiCreatePortResource(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
+    KIO_PORT_ATTRIBUTE ulPortAttributes,
     USHORT usPortRangeStart,
     USHORT usPortRangeEnd
     );
 
-KERNEL_API void IoDestroyPortResource(
-    PIO_PORT_DESCRIPTOR pPortDescriptor);
+KERNEL_API void KiDestroyPortResource(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor);
 
-KERNEL_API STATUS IoWritePortByte(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiWritePortByte(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     UCHAR ucValue
     );
 
-KERNEL_API STATUS IoReadPortByte(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiReadPortByte(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     PUCHAR pucValue
     );
 
-KERNEL_API STATUS IoWritePortWord(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiWritePortWord(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     USHORT usValue
     );
 
-KERNEL_API STATUS IoReadPortWord(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiReadPortWord(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     PUSHORT pusValue
     );
 
-KERNEL_API STATUS IoWritePortDword(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiWritePortDword(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     ULONG ulValue
     );
 
-KERNEL_API STATUS IoReadPortDword(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiReadPortDword(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     PULONG pulValue
     );

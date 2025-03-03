@@ -123,6 +123,13 @@ _Static_assert(sizeof(type) == (expected_size), "Size check failed")
 static_assert(sizeof(type) == (expected_size), "Size check failed")
 #endif // __cplusplus
 
+#define PREVENT_DOUBLE_INIT   static BOOL wasInitialized = FALSE; \
+                              if (wasInitialized) {               \
+                                  return;                         \
+                              }                                   \
+                              wasInitialized = TRUE;              \
+
+
 CHECK_SIZEOF(USHORT, 2);
 CHECK_SIZEOF(ULONG, 4);
 CHECK_SIZEOF(ULONGLONG, 8);

@@ -12,24 +12,25 @@ KERNEL_API void KiDebugConnPuts(LPSTR lpszMsg);
 
 #define DEBUG_CONN_IO_PORT 0xE9
 
-static struct SPINLOCK slDebugPrint;
-static struct IO_PORT_DESCRIPTOR ipdDebugPort;
+static struct KSPINLOCK slDebugPrint;
+static struct KIO_PORT_DESCRIPTOR ipdDebugPort;
 
 KERNEL_API void KiDebugConnPuts(LPSTR lpszMsg)
 {
     for (; *lpszMsg != '\0'; lpszMsg++)
     {
-        IoWritePortByte(&ipdDebugPort, 0xE9, *lpszMsg);
+        KiWritePortByte(&ipdDebugPort, 0xE9, *lpszMsg);
     }
 }
 
 KERNEL_API void KiInitializeDebugPort() {
-    RtlCreateSpinLock(&slDebugPrint);
-    IoCreatePortResource(&ipdDebugPort, IOP_ATTRIBUTE_WRITABLE, DEBUG_CONN_IO_PORT, DEBUG_CONN_IO_PORT);
+    PREVENT_DOUBLE_INIT
+    KiCreateSpinLock(&slDebugPrint);
+    KiCreatePortResource(&ipdDebugPort, IOP_ATTRIBUTE_WRITABLE, DEBUG_CONN_IO_PORT, DEBUG_CONN_IO_PORT);
 }
 
 KERNEL_API void KeDebugPrint(LPSTR lpszMsg, ...) {
-    RtlAcquireSpinlock(&slDebugPrint);
+    KiAcquireSpinlock(&slDebugPrint);
 
     va_list args;
     va_start(args, lpszMsg);
@@ -40,7 +41,7 @@ KERNEL_API void KeDebugPrint(LPSTR lpszMsg, ...) {
     KiDebugConnPuts(message_buffer);
 
     va_end(args);
-    RtlReleaseSpinlock(&slDebugPrint);
+    KiReleaseSpinlock(&slDebugPrint);
 }
 
 KERNEL_API void KeDebugPrintNoSync(LPSTR lpszMsg, ...) {

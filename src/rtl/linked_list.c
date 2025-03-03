@@ -6,17 +6,17 @@
 
 #include "dlmalloc.h"
 
-KERNEL_API void RtlCreateLinkedList(PLINKED_LIST LinkedList) {
+KERNEL_API void KiCreateLinkedList(PKLINKED_LIST LinkedList) {
     if (!LinkedList) return;
     LinkedList->EntryCount = 0;
     LinkedList->Front = NULL;
     LinkedList->Back = NULL;
 }
 
-KERNEL_API void RtlPushToLinkedList(PLINKED_LIST LinkedList, PVOID Data) {
+KERNEL_API void KiPushToLinkedList(PKLINKED_LIST LinkedList, PVOID Data) {
     if (!LinkedList) return;
 
-    PLINKED_LIST_ENTRY NewEntry = malloc(sizeof(struct LINKED_LIST_ENTRY));
+    PKLINKED_LIST_ENTRY NewEntry = malloc(sizeof(struct KLINKED_LIST_ENTRY));
     if (!NewEntry) return;
     
     NewEntry->Data = Data;
@@ -33,10 +33,10 @@ KERNEL_API void RtlPushToLinkedList(PLINKED_LIST LinkedList, PVOID Data) {
     LinkedList->EntryCount++;
 }
 
-KERNEL_API PVOID RtlPushFromLinkedList(PLINKED_LIST LinkedList) {
+KERNEL_API PVOID KiPushFromLinkedList(PKLINKED_LIST LinkedList) {
     if (!LinkedList || !LinkedList->Back) return NULL;
     
-    PLINKED_LIST_ENTRY Entry = LinkedList->Back;
+    PKLINKED_LIST_ENTRY Entry = LinkedList->Back;
     PVOID Data = Entry->Data;
     
     LinkedList->Back = Entry->Back;
@@ -51,15 +51,15 @@ KERNEL_API PVOID RtlPushFromLinkedList(PLINKED_LIST LinkedList) {
     return Data;
 }
 
-KERNEL_API SIZE_T RtlGetLinkedListEntryCount(PLINKED_LIST LinkedList) {
+KERNEL_API SIZE_T KiGetLinkedListEntryCount(PKLINKED_LIST LinkedList) {
     if (!LinkedList) return 0;
     return LinkedList->EntryCount;
 }
 
-KERNEL_API PVOID RtlPopFromLinkedListAt(PLINKED_LIST LinkedList, SIZE_T Index) {
+KERNEL_API PVOID KiPopFromLinkedListAt(PKLINKED_LIST LinkedList, SIZE_T Index) {
     if (!LinkedList || Index >= LinkedList->EntryCount) return NULL;
     
-    PLINKED_LIST_ENTRY Entry = LinkedList->Front;
+    PKLINKED_LIST_ENTRY Entry = LinkedList->Front;
     for (SIZE_T i = 0; i < Index; i++) {
         Entry = Entry->Front;
     }
@@ -84,10 +84,10 @@ KERNEL_API PVOID RtlPopFromLinkedListAt(PLINKED_LIST LinkedList, SIZE_T Index) {
     return Data;
 }
 
-KERNEL_API void RtlPushToLinkedListAt(PLINKED_LIST LinkedList, PVOID Data, SIZE_T Index) {
+KERNEL_API void KiPushToLinkedListAt(PKLINKED_LIST LinkedList, PVOID Data, SIZE_T Index) {
     if (!LinkedList || Index > LinkedList->EntryCount) return;
     
-    PLINKED_LIST_ENTRY NewEntry = malloc(sizeof(struct LINKED_LIST_ENTRY));
+    PKLINKED_LIST_ENTRY NewEntry = malloc(sizeof(struct KLINKED_LIST_ENTRY));
     if (!NewEntry) return;
     
     NewEntry->Data = Data;
@@ -102,7 +102,7 @@ KERNEL_API void RtlPushToLinkedListAt(PLINKED_LIST LinkedList, PVOID Data, SIZE_
         }
         LinkedList->Front = NewEntry;
     } else {
-        PLINKED_LIST_ENTRY PrevEntry = LinkedList->Front;
+        PKLINKED_LIST_ENTRY PrevEntry = LinkedList->Front;
         for (SIZE_T i = 0; i < Index - 1; i++) {
             PrevEntry = PrevEntry->Front;
         }

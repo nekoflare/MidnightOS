@@ -234,23 +234,23 @@ int _errno = 0;  /* Just define it to make sure it exists */
 #define ENOMEM 12
 #include <rtl/spinlock.h>
 
-struct SPINLOCK slmalloc_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct SPINLOCK slmalloc_consolidate_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct SPINLOCK slfree_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct SPINLOCK slrealloc_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct SPINLOCK slcalloc_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct SPINLOCK slmemalign_lock = {.Lock = SPINLOCK_UNLOCKED};
-struct SPINLOCK slvalloc_lock = {.Lock = SPINLOCK_UNLOCKED};
+struct KSPINLOCK slmalloc_lock = {.Lock = SPINLOCK_UNLOCKED};
+struct KSPINLOCK slmalloc_consolidate_lock = {.Lock = SPINLOCK_UNLOCKED};
+struct KSPINLOCK slfree_lock = {.Lock = SPINLOCK_UNLOCKED};
+struct KSPINLOCK slrealloc_lock = {.Lock = SPINLOCK_UNLOCKED};
+struct KSPINLOCK slcalloc_lock = {.Lock = SPINLOCK_UNLOCKED};
+struct KSPINLOCK slmemalign_lock = {.Lock = SPINLOCK_UNLOCKED};
+struct KSPINLOCK slvalloc_lock = {.Lock = SPINLOCK_UNLOCKED};
 
 KERNEL_API void KiDLMallocInitialize()
 {
-	RtlCreateSpinLock(&slmalloc_lock);
-	RtlCreateSpinLock(&slmalloc_consolidate_lock);
-	RtlCreateSpinLock(&slfree_lock);
-	RtlCreateSpinLock(&slrealloc_lock);
-	RtlCreateSpinLock(&slcalloc_lock);
-	RtlCreateSpinLock(&slmemalign_lock);
-	RtlCreateSpinLock(&slvalloc_lock);
+	KiCreateSpinLock(&slmalloc_lock);
+	KiCreateSpinLock(&slmalloc_consolidate_lock);
+	KiCreateSpinLock(&slfree_lock);
+	KiCreateSpinLock(&slrealloc_lock);
+	KiCreateSpinLock(&slcalloc_lock);
+	KiCreateSpinLock(&slmemalign_lock);
+	KiCreateSpinLock(&slvalloc_lock);
 }
 
 
@@ -3371,7 +3371,7 @@ Void_t* mALLOc(size_t bytes)
   Void_t* mALLOc(bytes) size_t bytes;
 #endif
 {
-  RtlAcquireSpinlock(&slmalloc_lock);
+  KiAcquireSpinlock(&slmalloc_lock);
   mstate av = get_malloc_state();
 
   INTERNAL_SIZE_T nb;               /* normalized request size */
@@ -3445,7 +3445,7 @@ Void_t* mALLOc(size_t bytes)
       bck->fd = bin;
       
       check_malloced_chunk(victim, nb);
-	  RtlReleaseSpinlock(&slmalloc_lock);
+	  KiReleaseSpinlock(&slmalloc_lock);
       return chunk2mem(victim);
     }
   }
@@ -3504,7 +3504,7 @@ Void_t* mALLOc(size_t bytes)
       set_foot(remainder, remainder_size);
 
       check_malloced_chunk(victim, nb);
-	  RtlReleaseSpinlock(&slmalloc_lock);
+	  KiReleaseSpinlock(&slmalloc_lock);
       return chunk2mem(victim);
     }
 
@@ -3517,7 +3517,7 @@ Void_t* mALLOc(size_t bytes)
     if (size == nb) {
       set_inuse_bit_at_offset(victim, size);
       check_malloced_chunk(victim, nb);
-	  RtlReleaseSpinlock(&slmalloc_lock);
+	  KiReleaseSpinlock(&slmalloc_lock);
       return chunk2mem(victim);
     }
 
@@ -3581,7 +3581,7 @@ Void_t* mALLOc(size_t bytes)
         if (remainder_size < MINSIZE)  {
           set_inuse_bit_at_offset(victim, size);
           check_malloced_chunk(victim, nb);
-		  RtlReleaseSpinlock(&slmalloc_lock);
+		  KiReleaseSpinlock(&slmalloc_lock);
           return chunk2mem(victim);
         }
         /* Split */
@@ -3593,7 +3593,7 @@ Void_t* mALLOc(size_t bytes)
           set_head(remainder, remainder_size | PREV_INUSE);
           set_foot(remainder, remainder_size);
           check_malloced_chunk(victim, nb);
-		  RtlReleaseSpinlock(&slmalloc_lock);
+		  KiReleaseSpinlock(&slmalloc_lock);
           return chunk2mem(victim);
         }
       }
@@ -3662,7 +3662,7 @@ Void_t* mALLOc(size_t bytes)
       if (remainder_size < MINSIZE) {
         set_inuse_bit_at_offset(victim, size);
         check_malloced_chunk(victim, nb);
-		RtlReleaseSpinlock(&slmalloc_lock);
+		KiReleaseSpinlock(&slmalloc_lock);
         return chunk2mem(victim);
       }
 
@@ -3680,7 +3680,7 @@ Void_t* mALLOc(size_t bytes)
         set_head(remainder, remainder_size | PREV_INUSE);
         set_foot(remainder, remainder_size);
         check_malloced_chunk(victim, nb);
-		RtlReleaseSpinlock(&slmalloc_lock);
+		KiReleaseSpinlock(&slmalloc_lock);
         return chunk2mem(victim);
       }
     }
@@ -3713,14 +3713,14 @@ Void_t* mALLOc(size_t bytes)
     set_head(remainder, remainder_size | PREV_INUSE);
 
     check_malloced_chunk(victim, nb);
-	RtlReleaseSpinlock(&slmalloc_lock);
+	KiReleaseSpinlock(&slmalloc_lock);
     return chunk2mem(victim);
   }
 
   /*
      If no space in top, relay to handle system-dependent cases
   */
-  RtlReleaseSpinlock(&slmalloc_lock);
+  KiReleaseSpinlock(&slmalloc_lock);
   return sYSMALLOc(nb, av);    
 }
 
@@ -3734,7 +3734,7 @@ void fREe(Void_t* mem)
 void fREe(mem) Void_t* mem;
 #endif
 {
-  RtlAcquireSpinlock(&slfree_lock);
+  KiAcquireSpinlock(&slfree_lock);
   mstate av = get_malloc_state();
 
   mchunkptr       p;           /* chunk corresponding to mem */
@@ -3879,7 +3879,7 @@ void fREe(mem) Void_t* mem;
     }
   }
 
-  RtlReleaseSpinlock(&slfree_lock);
+  KiReleaseSpinlock(&slfree_lock);
 }
 
 /*
@@ -3902,7 +3902,7 @@ static void malloc_consolidate(mstate av)
 static void malloc_consolidate(av) mstate av;
 #endif
 {
-  RtlAcquireSpinlock(&slmalloc_consolidate_lock);
+  KiAcquireSpinlock(&slmalloc_consolidate_lock);
   mfastbinptr*    fb;                 /* current fastbin being consolidated */
   mfastbinptr*    maxfb;              /* last fastbin (for loop control) */
   mchunkptr       p;                  /* current chunk being consolidated */
@@ -3993,7 +3993,7 @@ static void malloc_consolidate(av) mstate av;
     malloc_init_state(av);
     check_malloc_state();
   }
-  RtlReleaseSpinlock(&slmalloc_consolidate_lock);
+  KiReleaseSpinlock(&slmalloc_consolidate_lock);
 }
 
 /*
@@ -4007,7 +4007,7 @@ Void_t* rEALLOc(Void_t* oldmem, size_t bytes)
 Void_t* rEALLOc(oldmem, bytes) Void_t* oldmem; size_t bytes;
 #endif
 {
-  RtlAcquireSpinlock(&slrealloc_lock);
+  KiAcquireSpinlock(&slrealloc_lock);
   mstate av = get_malloc_state();
 
   INTERNAL_SIZE_T  nb;              /* padded request size */
@@ -4068,7 +4068,7 @@ Void_t* rEALLOc(oldmem, bytes) Void_t* oldmem; size_t bytes;
         set_head_size(oldp, nb);
         av->top = chunk_at_offset(oldp, nb);
         set_head(av->top, (newsize - nb) | PREV_INUSE);
-		RtlReleaseSpinlock(&slrealloc_lock);
+		KiReleaseSpinlock(&slrealloc_lock);
         return chunk2mem(oldp);
       }
       
@@ -4085,7 +4085,7 @@ Void_t* rEALLOc(oldmem, bytes) Void_t* oldmem; size_t bytes;
       else {
         newmem = mALLOc(nb - MALLOC_ALIGN_MASK);
         if (newmem == 0)
-		  RtlReleaseSpinlock(&slrealloc_lock);
+		  KiReleaseSpinlock(&slrealloc_lock);
           return 0; /* propagate failure */
       
         newp = mem2chunk(newmem);
@@ -4134,7 +4134,7 @@ Void_t* rEALLOc(oldmem, bytes) Void_t* oldmem; size_t bytes;
           
           fREe(oldmem);
           check_inuse_chunk(newp);
-		  RtlReleaseSpinlock(&slrealloc_lock);
+		  KiReleaseSpinlock(&slrealloc_lock);
           return chunk2mem(newp);
         }
       }
@@ -4160,7 +4160,7 @@ Void_t* rEALLOc(oldmem, bytes) Void_t* oldmem; size_t bytes;
     }
 
     check_inuse_chunk(newp);
-	RtlReleaseSpinlock(&slrealloc_lock);
+	KiReleaseSpinlock(&slrealloc_lock);
     return chunk2mem(newp);
   }
 
@@ -4238,7 +4238,7 @@ Void_t* mEMALIGn(size_t alignment, size_t bytes)
 Void_t* mEMALIGn(alignment, bytes) size_t alignment; size_t bytes;
 #endif
 {
-  RtlAcquireSpinlock(&slmemalign_lock);
+  KiAcquireSpinlock(&slmemalign_lock);
   INTERNAL_SIZE_T nb;             /* padded  request size */
   char*           m;              /* memory returned by malloc call */
   mchunkptr       p;              /* corresponding chunk */
@@ -4304,7 +4304,7 @@ Void_t* mEMALIGn(alignment, bytes) size_t alignment; size_t bytes;
     if (chunk_is_mmapped(p)) {
       newp->prev_size = p->prev_size + leadsize;
       set_head(newp, newsize|IS_MMAPPED);
-	  RtlReleaseSpinlock(&slmemalign_lock);
+	  KiReleaseSpinlock(&slmemalign_lock);
       return chunk2mem(newp);
     }
 
@@ -4332,7 +4332,7 @@ Void_t* mEMALIGn(alignment, bytes) size_t alignment; size_t bytes;
   }
 
   check_inuse_chunk(p);
-  RtlReleaseSpinlock(&slmemalign_lock);
+  KiReleaseSpinlock(&slmemalign_lock);
   return chunk2mem(p);
 }
 
@@ -4346,7 +4346,7 @@ Void_t* cALLOc(size_t n_elements, size_t elem_size)
 Void_t* cALLOc(n_elements, elem_size) size_t n_elements; size_t elem_size;
 #endif
 {
-  RtlAcquireSpinlock(&slcalloc_lock);
+  KiAcquireSpinlock(&slcalloc_lock);
   mchunkptr p;
   CHUNK_SIZE_T  clearsize;
   CHUNK_SIZE_T  nclears;
@@ -4403,7 +4403,7 @@ Void_t* cALLOc(n_elements, elem_size) size_t n_elements; size_t elem_size;
     }
 #endif
   }
-  RtlReleaseSpinlock(&slcalloc_lock);
+  KiReleaseSpinlock(&slcalloc_lock);
   return mem;
 }
 

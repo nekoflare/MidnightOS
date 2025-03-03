@@ -7,7 +7,7 @@
 #include <ke/error.h>
 
 static BOOL KiIsIoPortValid(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort) {
     if (!(pPortDescriptor->PortRangeStart <= usPort && pPortDescriptor->PortRangeEnd >= usPort)) {
         return FALSE;
@@ -17,18 +17,18 @@ static BOOL KiIsIoPortValid(
 }
 
 static BOOL KiIsIoPortReadable(
-    PIO_PORT_DESCRIPTOR pPortDescriptor) {
+    PKIO_PORT_DESCRIPTOR pPortDescriptor) {
     return pPortDescriptor->PortAttributes & IOP_ATTRIBUTE_READABLE;
 }
 
 static BOOL KiIsIoPortWritable(
-    PIO_PORT_DESCRIPTOR pPortDescriptor) {
+    PKIO_PORT_DESCRIPTOR pPortDescriptor) {
     return pPortDescriptor->PortAttributes & IOP_ATTRIBUTE_WRITABLE;
 }
 
-KERNEL_API void IoCreatePortResource(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
-    IO_PORT_ATTRIBUTE ulPortAttributes,
+KERNEL_API void KiCreatePortResource(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
+    KIO_PORT_ATTRIBUTE ulPortAttributes,
     USHORT usPortRangeStart,
     USHORT usPortRangeEnd
 )
@@ -38,15 +38,15 @@ KERNEL_API void IoCreatePortResource(
     pPortDescriptor->PortRangeEnd   = usPortRangeEnd;
 }
 
-KERNEL_API void IoDestroyPortResource(
-    PIO_PORT_DESCRIPTOR pPortDescriptor) {
+KERNEL_API void KiDestroyPortResource(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor) {
     pPortDescriptor->PortAttributes = 0UL;
     pPortDescriptor->PortRangeStart = 0x0000;
     pPortDescriptor->PortRangeEnd   = 0x0000;
 }
 
-KERNEL_API STATUS IoWritePortByte(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiWritePortByte(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     UCHAR ucValue
     ) {
@@ -70,8 +70,8 @@ KERNEL_API STATUS IoWritePortByte(
     return STATUS_SUCCESS;
 }
 
-KERNEL_API STATUS IoReadPortByte(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiReadPortByte(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     PUCHAR pucValue
     ) {
@@ -99,8 +99,8 @@ KERNEL_API STATUS IoReadPortByte(
     return STATUS_SUCCESS;
 }
 
-KERNEL_API STATUS IoWritePortWord(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiWritePortWord(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     USHORT usValue
     ) {
@@ -124,8 +124,8 @@ KERNEL_API STATUS IoWritePortWord(
     return STATUS_SUCCESS;
 }
 
-KERNEL_API STATUS IoReadPortWord(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiReadPortWord(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     PUSHORT pusValue
     ) {
@@ -153,8 +153,8 @@ KERNEL_API STATUS IoReadPortWord(
     return STATUS_SUCCESS;
 }
 
-KERNEL_API STATUS IoWritePortDword(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiWritePortDword(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     ULONG ulValue
     ) {
@@ -178,8 +178,8 @@ KERNEL_API STATUS IoWritePortDword(
     return STATUS_SUCCESS;
 }
 
-KERNEL_API STATUS IoReadPortDword(
-    PIO_PORT_DESCRIPTOR pPortDescriptor,
+KERNEL_API STATUS KiReadPortDword(
+    PKIO_PORT_DESCRIPTOR pPortDescriptor,
     USHORT usPort,
     PULONG pulValue
     ) {

@@ -260,9 +260,10 @@ extern void idt_isr253();
 extern void idt_isr254();
 extern void idt_isr255();
 
-volatile struct GATE_DESCRIPTOR_64 idt[256] = {0};
+volatile struct KGATE_DESCRIPTOR_64 idt[256] = {0};
 
 void KiLoadIDTTableEntries() {
+    PREVENT_DOUBLE_INIT
     idt[0] = KiCreateIDTEntry(&idt_isr0, IDT_DEFAULT_SEGMENT, IDT_GATE_TYPE_INTERRUPT, IDT_DPL_RING_0, IDT_PRESENT, IDT_NO_IST);
     idt[1] = KiCreateIDTEntry(&idt_isr1, IDT_DEFAULT_SEGMENT, IDT_GATE_TYPE_INTERRUPT, IDT_DPL_RING_0, IDT_PRESENT, IDT_NO_IST);
     idt[2] = KiCreateIDTEntry(&idt_isr2, IDT_DEFAULT_SEGMENT, IDT_GATE_TYPE_INTERRUPT, IDT_DPL_RING_0, IDT_PRESENT, IDT_NO_IST);

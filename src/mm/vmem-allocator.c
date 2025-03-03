@@ -11,10 +11,11 @@
 #include "common.h"
 #include "virtual.h"
 
-struct SPINLOCK slAllocateKernelVirtualMemory;
+struct KSPINLOCK slAllocateKernelVirtualMemory;
 
-KERNEL_API void KiInitializeVirtualMemoryAllocator() {
-    RtlCreateSpinLock(&slAllocateKernelVirtualMemory); // initialize
+KERNEL_API void MiInitializeVirtualMemoryAllocator() {
+    PREVENT_DOUBLE_INIT
+    KiCreateSpinLock(&slAllocateKernelVirtualMemory); // initialize
 }
 
 KERNEL_API STATUS MmAllocateKernelVirtualMemory(
@@ -25,9 +26,9 @@ KERNEL_API STATUS MmAllocateKernelVirtualMemory(
         return STATUS_INVALID_PARAMETER;
     }
 
-    RtlAcquireSpinlock(&slAllocateKernelVirtualMemory);
+    KiAcquireSpinlock(&slAllocateKernelVirtualMemory);
     //  Get the kernel VDA.
-    PVIRTUAL_MEMORY_DESCRIPTOR_ENTRY kernelVmde;
+    PKVIRTUAL_MEMORY_DESCRIPTOR_ENTRY kernelVmde;
     MiGetKernelVirtualMemoryDescriptor(&kernelVmde);
 
     if (Length >= kernelVmde->Length) {
@@ -39,7 +40,7 @@ KERNEL_API STATUS MmAllocateKernelVirtualMemory(
     kernelVmde->Base += Length;
     kernelVmde->Length -= Length;
 
-    RtlReleaseSpinlock(&slAllocateKernelVirtualMemory);
+    KiReleaseSpinlock(&slAllocateKernelVirtualMemory);
 
     *Address = ullAllocatedMemory;
 

@@ -114,7 +114,7 @@ static void* kernel_heap_committed_end = NULL;
 // This variable tracks how much of the heap has been used
 static intptr_t allocated_size = 0;
 
-KERNEL_API void KiInitializeKernelHeap() {
+KERNEL_API void MiInitializeKernelHeap() {
     // Reserve 32GB of virtual memory for the kernel heap.
     ULONGLONG reservedAddress = 0;
     if (MmAllocateKernelVirtualMemory(&reservedAddress, KERNEL_HEAP_SIZE) != STATUS_SUCCESS) {

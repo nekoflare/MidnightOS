@@ -11,6 +11,6 @@ KERNEL_API STATUS MmAllocateKernelVirtualMemory(
     PULONGLONG Address,
     SIZE_T Length);
 
-KERNEL_API void KiInitializeVirtualMemoryAllocator();
+KERNEL_API void MiInitializeVirtualMemoryAllocator();
 
 #endif //VMEM_ALLOCATOR_H

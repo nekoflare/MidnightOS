@@ -7,7 +7,7 @@
 
 #include <kernel.h>
 
-enum VM_PAGING_FLAGS {
+enum KVM_PAGING_FLAGS {
     VMPF_PRESENT = 1 << 0,
     VMPF_READ_WRITE = 1 << 1,
     VMPF_USER = 0,

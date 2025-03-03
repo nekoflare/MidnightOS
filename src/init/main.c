@@ -9,11 +9,7 @@
 #include <ke/irql.h>
 #include <hal/spratcher/spinit.h>
 #include <ke/bugcheck.h>
-#include <string.h>
 #include <hal/initialize_arch.h>
-#include <ke/error.h>
-#include <mm/common.h>
-#include <mm/physical.h>
 #include <mm/virtual.h>
 #include <mm/vmem-allocator.h>
 #include <rtl/dlmalloc.h>
@@ -26,16 +22,9 @@ KERNEL_API void KernelMain(void) {
     KiInitializeDebugPort();
     KiInitializeHAL();
     KiSpratcherInit();
-    KiInitializeVirtualMemoryAllocator();
+    MiInitializeVirtualMemoryAllocator();
     MiInitializeVirtualMemory();
-    KiInitializeKernelHeap();
-
-    while (TRUE) {
-        SIZE_T* Buffer = malloc(sizeof(SIZE_T) * 100);
-        for (SIZE_T i = 0; 100 > i; i++) {
-            *Buffer = i;
-        }
-    }
+    MiInitializeKernelHeap();
 
     KeDebugPrint("KernelMain() called\n");
     while (true) {

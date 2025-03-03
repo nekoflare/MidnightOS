@@ -7,43 +7,43 @@
 
 #include <kernel.h>
 
-struct LINKED_LIST;
-struct LINKED_LIST_ENTRY;
-typedef struct LINKED_LIST_ENTRY* PLINKED_LIST_ENTRY;
-typedef struct LINKED_LIST* PLINKED_LIST;
+struct KLINKED_LIST;
+struct KLINKED_LIST_ENTRY;
+typedef struct KLINKED_LIST_ENTRY* PKLINKED_LIST_ENTRY;
+typedef struct KLINKED_LIST* PKLINKED_LIST;
 
-struct LINKED_LIST {
+struct KLINKED_LIST {
     SIZE_T EntryCount;
-    PLINKED_LIST_ENTRY Front;
-    PLINKED_LIST_ENTRY Back;
+    PKLINKED_LIST_ENTRY Front;
+    PKLINKED_LIST_ENTRY Back;
 };
 
-struct LINKED_LIST_ENTRY
+struct KLINKED_LIST_ENTRY
 {
     PVOID Data;
-    PLINKED_LIST_ENTRY Front;
-    PLINKED_LIST_ENTRY Back;
+    PKLINKED_LIST_ENTRY Front;
+    PKLINKED_LIST_ENTRY Back;
 };
 
-KERNEL_API void RtlCreateLinkedList(
-    PLINKED_LIST LinkedList);
+KERNEL_API void KiCreateLinkedList(
+    PKLINKED_LIST LinkedList);
 
-KERNEL_API void RtlPushToLinkedList(
-    PLINKED_LIST LinkedList,
+KERNEL_API void KiPushToLinkedList(
+    PKLINKED_LIST LinkedList,
     PVOID Data);
 
-KERNEL_API PVOID RtlPushFromLinkedList(
-    PLINKED_LIST LinkedList);
+KERNEL_API PVOID KiPushFromLinkedList(
+    PKLINKED_LIST LinkedList);
 
-KERNEL_API SIZE_T RtlGetLinkedListEntryCount(
-    PLINKED_LIST LinkedList);
+KERNEL_API SIZE_T KiGetLinkedListEntryCount(
+    PKLINKED_LIST LinkedList);
 
-KERNEL_API PVOID RtlPopFromLinkedListAt(
-    PLINKED_LIST LinkedList,
+KERNEL_API PVOID KiPopFromLinkedListAt(
+    PKLINKED_LIST LinkedList,
     SIZE_T Index);
 
-KERNEL_API void RtlPushToLinkedListAt(
-    PLINKED_LIST LinkedList,
+KERNEL_API void KiPushToLinkedListAt(
+    PKLINKED_LIST LinkedList,
     PVOID Data,
     SIZE_T Index);
 

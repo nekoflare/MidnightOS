@@ -8,7 +8,7 @@
 #include <kdbg/debug_print.h>
 #include <ke/stacktrace.h>
 
-KERNEL_API LPSTR StringifyBugCheckError(BUGCHECK_REASON BugCheckReason) {
+KERNEL_API LPSTR StringifyBugCheckError(KBUGCHECK_REASON BugCheckReason) {
     switch (BugCheckReason) {
         case BUGCHECK_IRQL_LESS_OR_EQUAL: return "IRQL_LESS_OR_EQUAL";
         case BUGCHECK_UNEXPECTED_STATE: return "UNEXPECTED_STATE";
@@ -18,7 +18,7 @@ KERNEL_API LPSTR StringifyBugCheckError(BUGCHECK_REASON BugCheckReason) {
     }
 }
 
-KERNEL_API void KeBugCheck(BUGCHECK_REASON BugCheckReason) {
+KERNEL_API void KeBugCheck(KBUGCHECK_REASON BugCheckReason) {
     KeDebugPrintNoSync("*** BEGIN FATAL ***\n");
     KeWalkStack(256);
     KeDebugPrintNoSync("STATUS: %s\n", StringifyBugCheckError(BugCheckReason));

@@ -7,7 +7,7 @@
 
 #include <kernel.h>
 
-enum MEMORY_MAP_ENTRY_TYPE {
+enum KMEMORY_MAP_ENTRY_TYPE {
     MMET_USABLE,
     MMET_RESERVED,
     MMET_ACPI_RECLAIMABLE,
@@ -18,19 +18,19 @@ enum MEMORY_MAP_ENTRY_TYPE {
     MMET_FRAMEBUFFER
 };
 
-struct MEMORY_MAP_ENTRY {
+struct KMEMORY_MAP_ENTRY {
     ULONGLONG Base;
     ULONGLONG Length;
-    enum MEMORY_MAP_ENTRY_TYPE Type;
+    enum KMEMORY_MAP_ENTRY_TYPE Type;
 };
 
-typedef struct MEMORY_MAP_ENTRY* PMEMORY_MAP_ENTRY;
+typedef struct KMEMORY_MAP_ENTRY* PKMEMORY_MAP_ENTRY;
 
-KERNEL_API LPSTR StringifyMemoryMapEntryType(enum MEMORY_MAP_ENTRY_TYPE Type);
+KERNEL_API LPSTR StringifyMemoryMapEntryType(enum KMEMORY_MAP_ENTRY_TYPE Type);
 
 KERNEL_API SIZE_T MmGetMemoryMapEntryCount();
 KERNEL_API STATUS MmGetMemoryMapEntry(
-    PMEMORY_MAP_ENTRY Entry,
+    PKMEMORY_MAP_ENTRY Entry,
     SIZE_T Index
     );
 

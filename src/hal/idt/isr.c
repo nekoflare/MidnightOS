@@ -52,11 +52,11 @@ void KiInterruptHandler(INTERRUPT_STACK_FRAME* frame) {
         
     }
 
-    struct IO_PORT_DESCRIPTOR port = {0};
-    IoCreatePortResource(&port, IOP_ATTRIBUTE_WRITABLE, 0x20, 0x20);
-    IoWritePortByte(&port, 0x20, 0x20);
-    IoDestroyPortResource(&port);
-    IoCreatePortResource(&port, IOP_ATTRIBUTE_WRITABLE, 0xA0, 0xA0);
-    IoWritePortByte(&port, 0xA0, 0x20);
-    IoDestroyPortResource(&port);
+    struct KIO_PORT_DESCRIPTOR port = {0};
+    KiCreatePortResource(&port, IOP_ATTRIBUTE_WRITABLE, 0x20, 0x20);
+    KiWritePortByte(&port, 0x20, 0x20);
+    KiDestroyPortResource(&port);
+    KiCreatePortResource(&port, IOP_ATTRIBUTE_WRITABLE, 0xA0, 0xA0);
+    KiWritePortByte(&port, 0xA0, 0x20);
+    KiDestroyPortResource(&port);
 }

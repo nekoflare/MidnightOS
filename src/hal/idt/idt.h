@@ -7,25 +7,25 @@
 #include "interrupt_stackf.h"
 #include <kernel.h>
 
-struct IDTR
+struct KIDTR
 {
     USHORT limit;
     ULONGLONG idt_address;
 } __attribute__((packed));
 
-struct GATE_DESCRIPTOR_64
+struct KGATE_DESCRIPTOR_64
 {
-    USHORT offset_one;
-    USHORT segment_selector;
-    UCHAR ist : 3;
-    UCHAR reserved_one : 5;
-    UCHAR gate_type : 4;
-    UCHAR zero : 1;
-    UCHAR dpl : 2;
-    UCHAR present : 1;
-    USHORT offset_two;
-    UINT offset_three;
-    UINT reserved_two;
+    USHORT OffsetLow;
+    USHORT SegmentSelector;
+    UCHAR IST : 3;
+    UCHAR ReservedLow : 5;
+    UCHAR GateType : 4;
+    UCHAR Zero : 1;
+    UCHAR DPL : 2;
+    UCHAR Present : 1;
+    USHORT OffsetMiddle;
+    UINT OffsetHigh;
+    UINT ReservedHigh;
 } __attribute__((packed));
 
 #define IDT_GATE_TYPE_INTERRUPT 0xE
@@ -38,10 +38,9 @@ struct GATE_DESCRIPTOR_64
 #define IDT_NO_IST 0
 #define IDT_DEFAULT_SEGMENT 0x8
 
+struct KGATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_selector, uint8_t gate_type, uint8_t dpl_layer, uint8_t is_present, uint8_t ist);
 
-struct GATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_selector, uint8_t gate_type, uint8_t dpl_layer, uint8_t is_present, uint8_t ist);
-
-extern volatile struct GATE_DESCRIPTOR_64 idt[256];
+extern volatile struct KGATE_DESCRIPTOR_64 idt[256];
 
 void KiInitializeIDT();
 void KiPrintRegisters(const INTERRUPT_STACK_FRAME *regs);

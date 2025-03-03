@@ -24,6 +24,7 @@ STATUS KiSpratcherInitStage0(void);
 
 KERNEL_API void KiSpratcherInit()
 {
+    PREVENT_DOUBLE_INIT
     KIRQL oldIrql;
     BOOL irqlSet = FALSE;
     if (KeGetCurrentIrql() < HIGH_LEVEL) {
@@ -57,7 +58,7 @@ STATUS KiSpratcherInitStage0(void) {
     KiDLMallocInitialize();
     KeDebugPrint("[ Done ] Memory manager initialized\n");
     KeDebugPrint("[ Init ] Spratcher is preparing stack frame...\n");
-    KeStackTraceInit();
+    KiStackTraceInit();
     KeStackTraceRegDefaults();
     KeDebugPrint("[ Done ] Stack frame prepared\n");
     

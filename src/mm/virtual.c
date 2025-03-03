@@ -12,10 +12,11 @@
 #include "physical.h"
 
 /* The hole will be big enough that we don't need to free it for now. */
-struct VIRTUAL_MEMORY_DESCRIPTOR_ENTRY kernelVmde;
+struct KVIRTUAL_MEMORY_DESCRIPTOR_ENTRY kernelVmde;
 PVOID kernelPageMap = NULL;
 
 KERNEL_API void MiInitializeVirtualMemory() {
+    PREVENT_DOUBLE_INIT
     ULONGLONG ullHighestPhysicalAddress = MmGetHighestPhysicalAddress();
     ULONGLONG ullHigherHalfMemoryOffset = MmGetMemoryOffset();
 
@@ -35,8 +36,8 @@ KERNEL_API void MiInitializeVirtualMemory() {
 }
 
 KERNEL_API STATUS MiMapPage(
-    enum VM_SECURITY Security,
-    enum VM_MI_PAGING_FLAGS PagingFlags,
+    enum KVM_SECURITY Security,
+    enum KVM_MI_PAGING_FLAGS PagingFlags,
     PVOID Physical,
     PVOID Virtual,
     PVOID Pagemap /* Side note: it must be virtual. its universal*/)
@@ -191,7 +192,7 @@ KERNEL_API STATUS MmInvalidatePages(PVOID Virtual, SIZE_T Length)
 }
 
 
-KERNEL_API void MiGetKernelVirtualMemoryDescriptor(PVIRTUAL_MEMORY_DESCRIPTOR_ENTRY* Descriptor) {
+KERNEL_API void MiGetKernelVirtualMemoryDescriptor(PKVIRTUAL_MEMORY_DESCRIPTOR_ENTRY* Descriptor) {
     *Descriptor = &kernelVmde;
 }
 

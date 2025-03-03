@@ -28,14 +28,14 @@ struct MM_FREELIST_ENTRY {
 
 static struct MM_FREELIST_ENTRY* FreeListHead = NULL;
 
-struct SPINLOCK slAllocatePage;
-struct SPINLOCK slDeallocatePage;
+struct KSPINLOCK slAllocatePage;
+struct KSPINLOCK slDeallocatePage;
 
 static BOOL KiIsMemoryMapValid() {
     return memoryMapRequest.response != NULL;
 }
 
-static enum MEMORY_MAP_ENTRY_TYPE KiLimineMemoryMapEntryTypeToMDOS(uint64_t entry_type) {
+static enum KMEMORY_MAP_ENTRY_TYPE KiLimineMemoryMapEntryTypeToMDOS(uint64_t entry_type) {
     switch (entry_type) {
         case LIMINE_MEMMAP_USABLE:                  return MMET_USABLE;
         case LIMINE_MEMMAP_RESERVED:                return MMET_RESERVED;
@@ -49,7 +49,7 @@ static enum MEMORY_MAP_ENTRY_TYPE KiLimineMemoryMapEntryTypeToMDOS(uint64_t entr
     }
 }
 
-KERNEL_API LPSTR StringifyMemoryMapEntryType(enum MEMORY_MAP_ENTRY_TYPE Type) {
+KERNEL_API LPSTR StringifyMemoryMapEntryType(enum KMEMORY_MAP_ENTRY_TYPE Type) {
     switch (Type) {
         case MMET_USABLE:                  return "Usable";
         case MMET_RESERVED:                return "Reserved";
@@ -70,7 +70,7 @@ KERNEL_API SIZE_T MmGetMemoryMapEntryCount() {
 }
 
 KERNEL_API STATUS MmGetMemoryMapEntry(
-    PMEMORY_MAP_ENTRY Entry,
+    PKMEMORY_MAP_ENTRY Entry,
     SIZE_T Index
     ) {
     if (!KiIsMemoryMapValid()) {
@@ -93,7 +93,7 @@ KERNEL_API STATUS MmGetMemoryMapEntry(
 
 KERNEL_API void MmSummarizeMemoryMap() {
     SIZE_T dEntryCount = MmGetMemoryMapEntryCount();
-    struct MEMORY_MAP_ENTRY ent;
+    struct KMEMORY_MAP_ENTRY ent;
 
     ULONGLONG   ullUsable = 0,
                 ullReserved = 0,
@@ -194,11 +194,12 @@ KERNEL_API void MmSummarizeMemoryMap() {
 }
 
 KERNEL_API void KiInitializePhysicalMemoryManager() {
+    PREVENT_DOUBLE_INIT
     KeDebugPrint("Initializing physical memory manager...\n");
 
     // Initialize spinlocks
-    RtlCreateSpinLock(&slAllocatePage);
-    RtlCreateSpinLock(&slDeallocatePage);
+    KiCreateSpinLock(&slAllocatePage);
+    KiCreateSpinLock(&slDeallocatePage);
 
     if (!KiIsMemoryMapValid()) {
         KeDebugPrint("Memory map not available.\n");
@@ -208,7 +209,7 @@ KERNEL_API void KiInitializePhysicalMemoryManager() {
 
     FreeListHead = NULL;
     SIZE_T dEntryCount = MmGetMemoryMapEntryCount();
-    struct MEMORY_MAP_ENTRY ent;
+    struct KMEMORY_MAP_ENTRY ent;
 
     for (SIZE_T i = 0; i < dEntryCount; i++) {
         STATUS status = MmGetMemoryMapEntry(&ent, i);
@@ -250,10 +251,10 @@ KERNEL_API void KiInitializePhysicalMemoryManager() {
 }
 
 KERNEL_API STATUS MmAllocatePage(PVOID* Block) {
-    RtlAcquireSpinlock(&slAllocatePage);
+    KiAcquireSpinlock(&slAllocatePage);
     if (!Block) {
         SetLastError(STATUS_INVALID_PARAMETER);
-        RtlReleaseSpinlock(&slAllocatePage);
+        KiReleaseSpinlock(&slAllocatePage);
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -287,7 +288,7 @@ KERNEL_API STATUS MmAllocatePage(PVOID* Block) {
 
             *Block = allocated_page;
             SetLastError(STATUS_SUCCESS);
-            RtlReleaseSpinlock(&slAllocatePage);
+            KiReleaseSpinlock(&slAllocatePage);
             return STATUS_SUCCESS;
         }
 
@@ -296,7 +297,7 @@ KERNEL_API STATUS MmAllocatePage(PVOID* Block) {
     }
 
     SetLastError(STATUS_OUT_OF_MEMORY);
-    RtlReleaseSpinlock(&slAllocatePage);
+    KiReleaseSpinlock(&slAllocatePage);
     return STATUS_OUT_OF_MEMORY;
 }
 
@@ -306,20 +307,20 @@ KERNEL_API void MmFreePage(PVOID Block) {
         return;
     }
 
-    RtlAcquireSpinlock(&slDeallocatePage);
+    KiAcquireSpinlock(&slDeallocatePage);
 
     PMM_FREELIST_ENTRY free_entry = (PMM_FREELIST_ENTRY)Block;
     free_entry->PageCount = 1;
     free_entry->Next = FreeListHead;
     FreeListHead = free_entry;
 
-    RtlReleaseSpinlock(&slDeallocatePage);
+    KiReleaseSpinlock(&slDeallocatePage);
     SetLastError(STATUS_SUCCESS);
 }
 
 KERNEL_API ULONGLONG MmGetHighestPhysicalAddress() {
     SIZE_T dEntryCount = MmGetMemoryMapEntryCount();
-    struct MEMORY_MAP_ENTRY ent;
+    struct KMEMORY_MAP_ENTRY ent;
     ULONGLONG ullHighestAddress = 0;
 
     for (SIZE_T i = 0; i < dEntryCount; i++) {

@@ -7,6 +7,6 @@
 
 #include <kernel.h>
 
-KERNEL_API void KiInitializeKernelHeap();
+KERNEL_API void MiInitializeKernelHeap();
 
 #endif //RUNTIME_H

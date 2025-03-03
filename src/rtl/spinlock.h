@@ -7,24 +7,24 @@
 
 #include <kernel.h>
 
-enum SPINLOCK_LOCK_STATE {
+enum KSPINLOCK_LOCK_STATE {
     SPINLOCK_LOCKED,
     SPINLOCK_UNLOCKED
 };
 
-struct SPINLOCK {
-    volatile enum SPINLOCK_LOCK_STATE Lock;
+struct KSPINLOCK {
+    volatile enum KSPINLOCK_LOCK_STATE Lock;
 };
 
-typedef struct SPINLOCK* PSPINLOCK;
+typedef struct KSPINLOCK* PKSPINLOCK;
 
-KERNEL_API void RtlCreateSpinLock(
-    PSPINLOCK Spinlock);
+KERNEL_API void KiCreateSpinLock(
+    PKSPINLOCK Spinlock);
 
-KERNEL_API void RtlAcquireSpinlock(
-    PSPINLOCK Spinlock);
+KERNEL_API void KiAcquireSpinlock(
+    PKSPINLOCK Spinlock);
 
-KERNEL_API void RtlReleaseSpinlock(
-    PSPINLOCK Spinlock);
+KERNEL_API void KiReleaseSpinlock(
+    PKSPINLOCK Spinlock);
 
 #endif //SPINLOCK_H

@@ -134,31 +134,33 @@ void KiPrintRegisters(const INTERRUPT_STACK_FRAME *regs)
 }
 
 
-struct GATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_selector, uint8_t gate_type, uint8_t dpl_layer, uint8_t is_present, uint8_t ist)
+struct KGATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_selector, uint8_t gate_type, uint8_t dpl_layer, uint8_t is_present, uint8_t ist)
 {
-    struct GATE_DESCRIPTOR_64 a = {
-        .offset_one = (uint16_t)((uint64_t)offset & 0xFFFF),
-        .segment_selector = segment_selector,
-        .ist = ist,
-        .reserved_one = 0,
-        .gate_type = gate_type,
-        .zero = 0,
-        .dpl = dpl_layer,
-        .present = is_present,
-        .offset_two = (uint16_t)(((uint64_t)offset & 0xFFFF0000) >> 16),
-        .offset_three = (uint32_t)(((uint64_t)offset & 0xFFFFFFFF00000000) >> 32),
-        .reserved_two = 0
+    struct KGATE_DESCRIPTOR_64 a = {
+        .OffsetLow = (uint16_t)((uint64_t)offset & 0xFFFF),
+        .SegmentSelector = segment_selector,
+        .IST = ist,
+        .ReservedLow = 0,
+        .GateType = gate_type,
+        .Zero = 0,
+        .DPL = dpl_layer,
+        .Present = is_present,
+        .OffsetMiddle = (uint16_t)(((uint64_t)offset & 0xFFFF0000) >> 16),
+        .OffsetHigh = (uint32_t)(((uint64_t)offset & 0xFFFFFFFF00000000) >> 32),
+        .ReservedHigh = 0
     };
 
     return a;
 }
 
-extern void KiLoadIDTTable(struct IDTR *idtr);
+extern void KiLoadIDTTable(struct KIDTR *idtr);
 
 void KiInitializeIDT()
 {
+    PREVENT_DOUBLE_INIT
+
     KeDebugPrint("Initializing IDT\n");
-    struct IDTR idt_register = {0};
+    struct KIDTR idt_register = {0};
     idt_register.limit = sizeof(idt) - 1;
     idt_register.idt_address = (ULONGLONG)&idt;
     KiLoadIDTTableEntries();
