@@ -30,79 +30,11 @@ KERNEL_API void KernelMain(void) {
     MiInitializeVirtualMemory();
     KiInitializeKernelHeap();
 
-    SIZE_T* Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
-    }
-
-    Buffer = malloc(sizeof(SIZE_T) * 100);
-    for (SIZE_T i = 0; 100 > i; i++) {
-        *Buffer = i;
+    while (TRUE) {
+        SIZE_T* Buffer = malloc(sizeof(SIZE_T) * 100);
+        for (SIZE_T i = 0; 100 > i; i++) {
+            *Buffer = i;
+        }
     }
 
     KeDebugPrint("KernelMain() called\n");
