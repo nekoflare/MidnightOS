@@ -23,15 +23,84 @@ KERNEL_API void KernelMain(void) {
     // Initialize HAL component
     if (KeGetCurrentIrql() < HIGH_LEVEL)
         KeRaiseIrql(HIGH_LEVEL, NULL); // Ignore old IRQL
-    KiInitializeDebugConn();
+    KiInitializeDebugPort();
     KiInitializeHAL();
-    KiInitializePhysicalMemoryManager();
+    KiSpratcherInit();
     KiInitializeVirtualMemoryAllocator();
     MiInitializeVirtualMemory();
     KiInitializeKernelHeap();
-    KiSpratcherInit();
 
     SIZE_T* Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
+    for (SIZE_T i = 0; 100 > i; i++) {
+        *Buffer = i;
+    }
+
+    Buffer = malloc(sizeof(SIZE_T) * 100);
     for (SIZE_T i = 0; 100 > i; i++) {
         *Buffer = i;
     }

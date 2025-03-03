@@ -23,7 +23,7 @@ KERNEL_API void KiDebugConnPuts(LPSTR lpszMsg)
     }
 }
 
-KERNEL_API void KiInitializeDebugConn() {
+KERNEL_API void KiInitializeDebugPort() {
     RtlCreateSpinLock(&slDebugPrint);
     IoCreatePortResource(&ipdDebugPort, IOP_ATTRIBUTE_WRITABLE, DEBUG_CONN_IO_PORT, DEBUG_CONN_IO_PORT);
 }

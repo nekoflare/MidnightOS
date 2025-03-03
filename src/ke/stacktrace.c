@@ -174,7 +174,7 @@ KERNEL_API void KeStackTraceRegDefaults() {
     KeStackTraceRegisterFunction((ULONGLONG)IoCreatePortResource, "IoCreatePortResource");
     KeStackTraceRegisterFunction((ULONGLONG)IoWritePortByte, "IoWritePortByte");
     KeStackTraceRegisterFunction((ULONGLONG)IoDestroyPortResource, "IoDestroyPortResource");
-    KeStackTraceRegisterFunction((ULONGLONG)KiInitializeDebugConn, "KiInitializeDebugConn");
+    KeStackTraceRegisterFunction((ULONGLONG)KiInitializeDebugPort, "KiInitializeDebugConn");
     KeStackTraceRegisterFunction((ULONGLONG)KeLowerIrql, "KeLowerIrql");
     KeStackTraceRegisterFunction((ULONGLONG)KeGetCurrentIrql, "KeGetCurrentIrql");
     KeStackTraceRegisterFunction((ULONGLONG)KeDebugPrint, "KeDebugPrint");
