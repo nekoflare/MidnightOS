@@ -69,6 +69,11 @@ add_executable(MidnightOS
         src/mm/vmem-allocator.h
         src/mm/paging.h
         src/rtl/runtime.h
+        src/ob/object.c
+        src/ob/object.h
+        src/se/descriptor.h
+        src/se/manager.c
+        src/se/manager.h
 
 )
 
