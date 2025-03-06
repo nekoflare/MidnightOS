@@ -9,4 +9,4 @@
 
 KERNEL_API void KiEnableAVX();
 
-#endif //FEATURES_H
+#endif // FEATURES_H

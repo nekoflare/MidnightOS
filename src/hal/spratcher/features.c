@@ -6,6 +6,7 @@
 
 extern void KiAsmEnableAVX();
 
-void KiEnableAVX() {
+void KiEnableAVX()
+{
     KiAsmEnableAVX();
 }

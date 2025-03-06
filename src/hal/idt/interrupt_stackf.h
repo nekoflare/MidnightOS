@@ -2,7 +2,8 @@
 #define INTERRUPT_STACK_FRAME_H
 
 #include <kernel.h>
-typedef struct {
+typedef struct
+{
     ULONGLONG DR0;
     ULONGLONG DR1;
     ULONGLONG DR2;

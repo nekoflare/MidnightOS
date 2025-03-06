@@ -13,15 +13,16 @@
 
 struct KSPINLOCK slAllocateKernelVirtualMemory;
 
-KERNEL_API void MiInitializeVirtualMemoryAllocator() {
+KERNEL_API void MiInitializeVirtualMemoryAllocator()
+{
     PREVENT_DOUBLE_INIT
     KiCreateSpinLock(&slAllocateKernelVirtualMemory); // initialize
 }
 
-KERNEL_API STATUS MmAllocateKernelVirtualMemory(
-    PULONGLONG Address,
-    SIZE_T Length) {
-    if (Length % PAGE_SIZE != 0) {
+KERNEL_API STATUS MmAllocateKernelVirtualMemory(PULONGLONG Address, SIZE_T Length)
+{
+    if (Length % PAGE_SIZE != 0)
+    {
         SetLastError(STATUS_INVALID_PARAMETER);
         return STATUS_INVALID_PARAMETER;
     }
@@ -31,7 +32,8 @@ KERNEL_API STATUS MmAllocateKernelVirtualMemory(
     PKVIRTUAL_MEMORY_DESCRIPTOR_ENTRY KernelVmde;
     MiGetKernelVirtualMemoryDescriptor(&KernelVmde);
 
-    if (Length >= KernelVmde->Length) {
+    if (Length >= KernelVmde->Length)
+    {
         SetLastError(STATUS_OUT_OF_MEMORY);
         return STATUS_OUT_OF_MEMORY;
     }

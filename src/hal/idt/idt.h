@@ -38,12 +38,12 @@ struct KGATE_DESCRIPTOR_64
 #define IDT_NO_IST 0
 #define IDT_DEFAULT_SEGMENT 0x8
 
-struct KGATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_selector, uint8_t gate_type, uint8_t dpl_layer, uint8_t is_present, uint8_t ist);
+struct KGATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_selector, uint8_t gate_type,
+                                            uint8_t dpl_layer, uint8_t is_present, uint8_t ist);
 
 extern volatile struct KGATE_DESCRIPTOR_64 Idt[256];
 
 void KiInitializeIDT();
 void KiPrintRegisters(const INTERRUPT_STACK_FRAME *regs);
-
 
 #endif // IDT_H

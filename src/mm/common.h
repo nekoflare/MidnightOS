@@ -12,4 +12,4 @@
 KERNEL_API ULONGLONG MmGetMemoryOffset(); // Gives offset to get virtual address. HHDM
 KERNEL_API ULONGLONG MmGetKernelAddressVirtual();
 
-#endif //COMMON_H
+#endif // COMMON_H

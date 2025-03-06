@@ -13,4 +13,4 @@ This is the main header for most SPRATCHER components.
 
 KERNEL_API void KiSpratcherInit();
 
-#endif //SPINIT_H
+#endif // SPINIT_H

@@ -6,33 +6,35 @@
 
 #include <ke/irql.h>
 
-KERNEL_API void KiCreateSpinLock(
-    PKSPINLOCK Spinlock) {
+KERNEL_API void KiCreateSpinLock(PKSPINLOCK Spinlock)
+{
     Spinlock->Lock = SPINLOCK_UNLOCKED;
 }
 
-KERNEL_API void KiAcquireSpinlock(
-    PKSPINLOCK Spinlock) {
+KERNEL_API void KiAcquireSpinlock(PKSPINLOCK Spinlock)
+{
     KIRQL CurrentIrql;
     KIRQL OldIrql = 0;
-    
+
     // Raise IRQL if needed
     CurrentIrql = KeGetCurrentIrql();
-    if (CurrentIrql < DEVICE_LEVEL) KeRaiseIrql(DEVICE_LEVEL, &OldIrql);
+    if (CurrentIrql < DEVICE_LEVEL)
+        KeRaiseIrql(DEVICE_LEVEL, &OldIrql);
 
-    while (Spinlock->Lock == SPINLOCK_LOCKED) {
-        asm volatile ("pause"); // Self explanatory
+    while (Spinlock->Lock == SPINLOCK_LOCKED)
+    {
+        asm volatile("pause"); // Self explanatory
     }
 
     // Lock
     Spinlock->Lock = SPINLOCK_LOCKED;
 
     // Restore old
-    if (CurrentIrql < DEVICE_LEVEL) KeLowerIrql(OldIrql);
+    if (CurrentIrql < DEVICE_LEVEL)
+        KeLowerIrql(OldIrql);
 }
 
-
-KERNEL_API void KiReleaseSpinlock(
-    PKSPINLOCK Spinlock) {
+KERNEL_API void KiReleaseSpinlock(PKSPINLOCK Spinlock)
+{
     Spinlock->Lock = SPINLOCK_UNLOCKED;
 }

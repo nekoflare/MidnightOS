@@ -3,9 +3,9 @@
 //
 
 #include "initialize_arch.h"
-#include <kdbg/debug_print.h>
 #include "gdt/gdt.h"
 #include "idt/idt.h"
+#include <kdbg/debug_print.h>
 
 KERNEL_API void KiInitializeHAL()
 {

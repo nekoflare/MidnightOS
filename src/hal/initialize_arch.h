@@ -9,4 +9,4 @@
 
 KERNEL_API void KiInitializeHAL();
 
-#endif //INITIALIZE_ARCH_H
+#endif // INITIALIZE_ARCH_H

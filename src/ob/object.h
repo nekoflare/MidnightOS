@@ -9,7 +9,8 @@
 #include <rtl/linked_list.h>
 #include <se/descriptor.h>
 
-typedef struct _OBJECT_TYPE {
+typedef struct _OBJECT_TYPE
+{
     LPSTR Name;
     ULONG ObjectSize;
     ULONG Flags;
@@ -17,7 +18,8 @@ typedef struct _OBJECT_TYPE {
     void (*SecurityProcedure)(PVOID Object, PSECURITY_DESCRIPTOR SecurityDescriptor);
 } OBJECT_TYPE, *POBJECT_TYPE;
 
-typedef struct _OBJECT_HEADER {
+typedef struct _OBJECT_HEADER
+{
     ULONG ReferenceCount;
     ULONG HandleCount;
     POBJECT_TYPE ObjectType;
@@ -25,4 +27,4 @@ typedef struct _OBJECT_HEADER {
     PKLINKED_LIST ObjectListEntry;
 } OBJECT_HEADER, *POBJECT_HEADER;
 
-#endif //OBJECT_H
+#endif // OBJECT_H

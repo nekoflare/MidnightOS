@@ -17,4 +17,4 @@ typedef ULONG KBUGCHECK_REASON;
 KERNEL_API LPSTR StringifyBugCheckError(KBUGCHECK_REASON BugCheckReason);
 KERNEL_API void KeBugCheck(KBUGCHECK_REASON BugCheckReason);
 
-#endif //BUGCHECK_H
+#endif // BUGCHECK_H

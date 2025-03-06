@@ -9,4 +9,4 @@
 
 KERNEL_API void MiInitializeKernelHeap();
 
-#endif //RUNTIME_H
+#endif // RUNTIME_H

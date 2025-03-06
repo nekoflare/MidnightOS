@@ -7,10 +7,8 @@
 
 #include <kernel.h>
 
-KERNEL_API STATUS MmAllocateKernelVirtualMemory(
-    PULONGLONG Address,
-    SIZE_T Length);
+KERNEL_API STATUS MmAllocateKernelVirtualMemory(PULONGLONG Address, SIZE_T Length);
 
 KERNEL_API void MiInitializeVirtualMemoryAllocator();
 
-#endif //VMEM_ALLOCATOR_H
+#endif // VMEM_ALLOCATOR_H

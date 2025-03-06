@@ -7,22 +7,24 @@
 
 #include <kernel.h>
 
-struct GDTR {
+struct GDTR
+{
     USHORT Size;
     ULONGLONG GdtAddress;
 } __attribute__((packed));
-typedef struct GDTR* PGDTR;
+typedef struct GDTR *PGDTR;
 
-struct GDT_ACCESS_BYTE {
-    UCHAR Accessed        : 1;
-    UCHAR ReadWrite       : 1;
-    UCHAR Direction       : 1;
-    UCHAR Executable      : 1;
-    UCHAR DescriptorType  : 1;
+struct GDT_ACCESS_BYTE
+{
+    UCHAR Accessed : 1;
+    UCHAR ReadWrite : 1;
+    UCHAR Direction : 1;
+    UCHAR Executable : 1;
+    UCHAR DescriptorType : 1;
     UCHAR DescriptorPrivLevel : 2;
-    UCHAR Present         : 1;
+    UCHAR Present : 1;
 } __attribute__((packed));
-typedef struct GDT_ACCESS_BYTE* PGDT_ACCESS_BYTE;
+typedef struct GDT_ACCESS_BYTE *PGDT_ACCESS_BYTE;
 
 enum GDT_ACCESS_BYTE_BITS
 {
@@ -45,7 +47,8 @@ enum GDT_FLAGS_BITS
     GDT_LONG_MODE_FLAG = 1 << 1
 };
 
-struct GDT_SEGMENT_DESCRIPTOR {
+struct GDT_SEGMENT_DESCRIPTOR
+{
     USHORT LimitLow;
     USHORT BaseLow;
     UCHAR BaseMiddle;
@@ -55,7 +58,7 @@ struct GDT_SEGMENT_DESCRIPTOR {
     UCHAR BaseHigh;
 };
 
-typedef struct GDT_SEGMENT_DESCRIPTOR* PGDT_SEGMENT_DESCRIPTOR;
+typedef struct GDT_SEGMENT_DESCRIPTOR *PGDT_SEGMENT_DESCRIPTOR;
 
 struct GDT_SYSTEM_SEGMENT_DESCRIPTOR
 {
@@ -69,17 +72,16 @@ struct GDT_SYSTEM_SEGMENT_DESCRIPTOR
     ULONG BaseUpper;
 } __attribute__((packed));
 
-typedef struct GDT_SYSTEM_SEGMENT_DESCRIPTOR* PGDT_SYSTEM_SEGMENT_DESCRIPTOR;
+typedef struct GDT_SYSTEM_SEGMENT_DESCRIPTOR *PGDT_SYSTEM_SEGMENT_DESCRIPTOR;
 
 KERNEL_API void KiInitializeGDT();
 KERNEL_API void KiFlushGDT(PGDTR gdtr);
 
 #define GDT_ENTRY(_Base, _Limit, _Access, _Flags)                                                                      \
-{                                                                                                                  \
-    .LimitLow = (USHORT)(_Limit & 0xFFFF), .BaseLow = (USHORT)(_Base & 0xFFFF),       \
-    .BaseMiddle = (UCHAR)((_Base & 0xFF0000) >> 16), .Access = _Access,                            \
-    .Flags = _Flags,                              \
-    .BaseHigh = (UCHAR)((_Base & 0xFF000000) >> 24)                                                 \
-}
+    {                                                                                                                  \
+        .LimitLow = (USHORT)(_Limit & 0xFFFF), .BaseLow = (USHORT)(_Base & 0xFFFF),                                    \
+        .BaseMiddle = (UCHAR)((_Base & 0xFF0000) >> 16), .Access = _Access, .Flags = _Flags,                           \
+        .BaseHigh = (UCHAR)((_Base & 0xFF000000) >> 24)                                                                \
+    }
 
-#endif //GDT_H
+#endif // GDT_H

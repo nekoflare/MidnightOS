@@ -11,4 +11,4 @@ KERNEL_API LPSTR StringifyError(STATUS status);
 KERNEL_API STATUS GetLastError();
 KERNEL_API void SetLastError(STATUS status);
 
-#endif //ERROR_H
+#endif // ERROR_H

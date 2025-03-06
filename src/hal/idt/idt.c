@@ -1,8 +1,7 @@
 #include "idt.h"
-#include <kdbg/debug_print.h>
-#include <hal/io.h>
 #include "raw_idt_table.h"
-
+#include <hal/io.h>
+#include <kdbg/debug_print.h>
 
 static ULONGLONG KiReadControlRegister2()
 {
@@ -123,9 +122,9 @@ void KiPrintRegisters(const INTERRUPT_STACK_FRAME *regs)
     KeDebugPrint("DR0: %016lX DR1: %016lX DR2: %016lX DR3: %016lX\n", regs->DR0, regs->DR1, regs->DR2, regs->DR3);
     KeDebugPrint("DR4: %016lX DR5: %016lX DR6: %016lX DR7: %016lX\n", regs->DR4, regs->DR5, regs->DR6, regs->DR7);
     KeDebugPrint("CR0: %016lX CR2: %016lX CR3: %016lX CR4: %016lX CR8: %016lX\n", regs->CR0, regs->CR2, regs->CR3,
-                regs->CR4, regs->CR8);
+                 regs->CR4, regs->CR8);
     KeDebugPrint("CS:  %02lX  DS:  %02lX  SS:  %02lX  ES:  %02lX  FS:  %02lX GS: %02lX\n", regs->CS, regs->DS, regs->SS,
-                regs->ES, regs->FS, regs->GS);
+                 regs->ES, regs->FS, regs->GS);
     KeDebugPrint("RIP: %016lX\n", regs->RIP);
     KeDebugPrint("Orig RSP: %016lX CR3: %016lX\n", regs->OriginalRSP, regs->CR3);
     KeDebugPrint("Error code: %016lX Interrupt index: %016lX\n", regs->ErrorCode, regs->InterruptNumber);
@@ -133,22 +132,20 @@ void KiPrintRegisters(const INTERRUPT_STACK_FRAME *regs)
     KiPrintProcessorFlags(regs->RFLAGS);
 }
 
-
-struct KGATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_selector, uint8_t gate_type, uint8_t dpl_layer, uint8_t is_present, uint8_t ist)
+struct KGATE_DESCRIPTOR_64 KiCreateIDTEntry(void (*offset)(), uint16_t segment_selector, uint8_t gate_type,
+                                            uint8_t dpl_layer, uint8_t is_present, uint8_t ist)
 {
-    struct KGATE_DESCRIPTOR_64 IDTEntry = {
-        .OffsetLow = (uint16_t)((uint64_t)offset & 0xFFFF),
-        .SegmentSelector = segment_selector,
-        .IST = ist,
-        .ReservedLow = 0,
-        .GateType = gate_type,
-        .Zero = 0,
-        .DPL = dpl_layer,
-        .Present = is_present,
-        .OffsetMiddle = (uint16_t)(((uint64_t)offset & 0xFFFF0000) >> 16),
-        .OffsetHigh = (uint32_t)(((uint64_t)offset & 0xFFFFFFFF00000000) >> 32),
-        .ReservedHigh = 0
-    };
+    struct KGATE_DESCRIPTOR_64 IDTEntry = {.OffsetLow = (uint16_t)((uint64_t)offset & 0xFFFF),
+                                           .SegmentSelector = segment_selector,
+                                           .IST = ist,
+                                           .ReservedLow = 0,
+                                           .GateType = gate_type,
+                                           .Zero = 0,
+                                           .DPL = dpl_layer,
+                                           .Present = is_present,
+                                           .OffsetMiddle = (uint16_t)(((uint64_t)offset & 0xFFFF0000) >> 16),
+                                           .OffsetHigh = (uint32_t)(((uint64_t)offset & 0xFFFFFFFF00000000) >> 32),
+                                           .ReservedHigh = 0};
 
     return IDTEntry;
 }

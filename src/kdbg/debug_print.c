@@ -2,8 +2,8 @@
 // Created by Neko on 28.02.2025.
 //
 
-#include <rtl/spinlock.h>
 #include <hal/io.h>
+#include <rtl/spinlock.h>
 #include <stdarg.h>
 
 #include "debug_print.h"
@@ -23,13 +23,15 @@ KERNEL_API void KiDebugConnPuts(LPSTR lpszMsg)
     }
 }
 
-KERNEL_API void KiInitializeDebugPort() {
+KERNEL_API void KiInitializeDebugPort()
+{
     PREVENT_DOUBLE_INIT
     KiCreateSpinLock(&slDebugPrint);
     KiCreatePortResource(&ipdDebugPort, IOP_ATTRIBUTE_WRITABLE, DEBUG_PORT, DEBUG_PORT);
 }
 
-KERNEL_API void KeDebugPrint(LPSTR lpszMsg, ...) {
+KERNEL_API void KeDebugPrint(LPSTR lpszMsg, ...)
+{
     KiAcquireSpinlock(&slDebugPrint);
 
     va_list args;
@@ -44,7 +46,8 @@ KERNEL_API void KeDebugPrint(LPSTR lpszMsg, ...) {
     KiReleaseSpinlock(&slDebugPrint);
 }
 
-KERNEL_API void KeDebugPrintNoSync(LPSTR lpszMsg, ...) {
+KERNEL_API void KeDebugPrintNoSync(LPSTR lpszMsg, ...)
+{
     va_list args;
     va_start(args, lpszMsg);
 

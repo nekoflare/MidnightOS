@@ -11,10 +11,13 @@
 
 volatile struct limine_hhdm_request hhdmRequest = {.id = LIMINE_HHDM_REQUEST, .revision = 0, .response = NULL};
 
-volatile struct limine_kernel_address_request kernelAddressRequest = { .id = LIMINE_KERNEL_ADDRESS_REQUEST, .revision = 0, .response = NULL};
+volatile struct limine_kernel_address_request kernelAddressRequest = {
+    .id = LIMINE_KERNEL_ADDRESS_REQUEST, .revision = 0, .response = NULL};
 
-KERNEL_API ULONGLONG MmGetMemoryOffset() {
-    if (!hhdmRequest.response) {
+KERNEL_API ULONGLONG MmGetMemoryOffset()
+{
+    if (!hhdmRequest.response)
+    {
         KeBugCheck(BUGCHECK_UNRECOVERABLE_NO_MEMORY);
     }
 
@@ -22,8 +25,10 @@ KERNEL_API ULONGLONG MmGetMemoryOffset() {
     return hhdmRequest.response->offset;
 }
 
-KERNEL_API ULONGLONG MmGetKernelAddressVirtual() {
-    if (!kernelAddressRequest.response) {
+KERNEL_API ULONGLONG MmGetKernelAddressVirtual()
+{
+    if (!kernelAddressRequest.response)
+    {
         KeBugCheck(BUGCHECK_UNEXPECTED_STATE);
     }
 
