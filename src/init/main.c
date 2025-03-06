@@ -20,11 +20,7 @@ KERNEL_API void KernelMain(void) {
     if (KeGetCurrentIrql() < HIGH_LEVEL)
         KeRaiseIrql(HIGH_LEVEL, NULL); // Ignore old IRQL
     KiInitializeDebugPort();
-    KiInitializeHAL();
     KiSpratcherInit();
-    MiInitializeVirtualMemoryAllocator();
-    MiInitializeVirtualMemory();
-    MiInitializeKernelHeap();
 
     KeDebugPrint("KernelMain() called\n");
     while (true) {

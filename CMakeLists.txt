@@ -74,6 +74,8 @@ add_executable(MidnightOS
         src/se/descriptor.h
         src/se/manager.c
         src/se/manager.h
+        src/rtl/memory.c
+        src/rtl/memory.h
 
 )
 

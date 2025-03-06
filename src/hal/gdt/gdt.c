@@ -29,9 +29,7 @@ struct GDT_SEGMENT_DESCRIPTOR gdt[] = {
 KERNEL_API void KiInitializeGDT()
 {
     PREVENT_DOUBLE_INIT
-    KeDebugPrint("Initializing GDT...\n");
     struct GDTR gdtr = {.Size = sizeof(gdt) - 1, .GdtAddress = (ULONGLONG)&gdt};
 
     KiFlushGDT(&gdtr);
-    KeDebugPrint("GDT initialized\n");
 }

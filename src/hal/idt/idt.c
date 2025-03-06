@@ -159,7 +159,6 @@ void KiInitializeIDT()
 {
     PREVENT_DOUBLE_INIT
 
-    KeDebugPrint("Initializing IDT\n");
     struct KIDTR IdtRegister = {0};
     IdtRegister.Limit = sizeof(Idt) - 1;
     IdtRegister.Address = (ULONGLONG)&Idt;
@@ -167,5 +166,4 @@ void KiInitializeIDT()
     KiLoadIDTTable(&IdtRegister);
 
     asm volatile("sti");
-    KeDebugPrint("IDT initialized\n");
 }

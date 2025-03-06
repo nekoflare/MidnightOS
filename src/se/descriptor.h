@@ -10,7 +10,7 @@
 typedef struct _SID {
     UCHAR SubAuthorityCount;   // Number of subauthorities in the SID
     ULONG IdentifierAuthority; // The authority that issued the SID
-    ULONG SubAuthority[1];     // Array of subauthority values
+    PULONG SubAuthority;     // Array of subauthority values
 } SID, *PSID;
 
 typedef struct _ACL {
@@ -18,6 +18,13 @@ typedef struct _ACL {
     USHORT AceCount;           // Number of ACEs in the ACL
     // ACEs follow
 } ACL, *PACL;
+
+typedef struct _ACL_HEADER {
+    UCHAR AceType;
+    UCHAR AceFlags;
+    USHORT AceSize;
+    // Ace data follows.
+} ACL_HEADER, *PACL_HEADER;
 
 typedef ULONG SECURITY_DESCRIPTOR_CONTROL;
 
@@ -29,7 +36,6 @@ typedef ULONG SECURITY_DESCRIPTOR_CONTROL;
 #define SE_GROUP_DEFAULTED       (1 << 5)  // Group SID was defaulted
 #define SE_PROTECTED_DACL        (1 << 6)  // DACL is protected (cannot be modified)
 #define SE_PROTECTED_SACL        (1 << 7)  // SACL is protected (cannot be modified)
-#define SE_SELF_RELATIVE         (1 << 8)  // Security descriptor is self-relative
 
 typedef struct _SECURITY_DESCRIPTOR {
     SECURITY_DESCRIPTOR_CONTROL Control;   // Control flags (e.g., DACL, SACL present)

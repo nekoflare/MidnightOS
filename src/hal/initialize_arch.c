@@ -10,8 +10,6 @@
 KERNEL_API void KiInitializeHAL()
 {
     PREVENT_DOUBLE_INIT
-    KeDebugPrint("Initializing HAL...\n");
     KiInitializeGDT();
     KiInitializeIDT();
-    KeDebugPrint("HAL initialized\n");
 }
