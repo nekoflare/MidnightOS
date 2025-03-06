@@ -8,14 +8,12 @@
 #include <kernel.h>
 
 typedef struct _SID {
-    UCHAR Revision;            // Revision level of the SID
     UCHAR SubAuthorityCount;   // Number of subauthorities in the SID
     ULONG IdentifierAuthority; // The authority that issued the SID
     ULONG SubAuthority[1];     // Array of subauthority values
 } SID, *PSID;
 
 typedef struct _ACL {
-    UCHAR  AclRevision;        // Revision level of the ACL structure
     USHORT AclSize;            // Size, in bytes, of the ACL
     USHORT AceCount;           // Number of ACEs in the ACL
     // ACEs follow
@@ -34,8 +32,6 @@ typedef ULONG SECURITY_DESCRIPTOR_CONTROL;
 #define SE_SELF_RELATIVE         (1 << 8)  // Security descriptor is self-relative
 
 typedef struct _SECURITY_DESCRIPTOR {
-    UCHAR                       Revision;  // Revision level of the security descriptor
-    UCHAR                       Sbz1;      // Reserved, must be zero
     SECURITY_DESCRIPTOR_CONTROL Control;   // Control flags (e.g., DACL, SACL present)
     PSID                        Owner;     // Pointer to owner SID
     PSID                        Group;     // Pointer to group SID
