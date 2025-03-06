@@ -76,6 +76,9 @@ add_executable(MidnightOS
         src/se/manager.h
         src/rtl/memory.c
         src/rtl/memory.h
+        src/hal/spratcher/features.c
+        src/hal/spratcher/features.h
+        src/hal/spratcher/features.asm
 
 )
 

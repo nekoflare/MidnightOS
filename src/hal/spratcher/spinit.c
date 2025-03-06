@@ -20,6 +20,8 @@ This is the main C file for most SPRATCHER components.
 #include <rtl/dlmalloc.h>
 #include <rtl/runtime.h>
 
+#include "features.h"
+
 CHAR* SpratcherCurrentStep = {0};
 
 // Forward declarations
@@ -53,6 +55,16 @@ KERNEL_API void KiSpratcherInit()
 void KiPrintSupportedCPUExtension(BOOL Exists, LPSTR Extension) {
     if (Exists)
         KeDebugPrint("%s is supported\n", Extension);
+}
+
+void KiPrintSupportedCpuExtensionAndEnable(
+    BOOL Exists,
+    LPSTR Extension,
+    void(*EnableFunction)()) {
+    if (Exists) {
+        KiPrintSupportedCPUExtension(TRUE, Extension);
+        EnableFunction();
+    }
 }
 
 STATUS KiSpratcherInitStage0(void) {
@@ -102,8 +114,8 @@ STATUS KiSpratcherInitStage0(void) {
     KiPrintSupportedCPUExtension(Ecx & (1 << 20), "SSE4.2 is supported");
     KiPrintSupportedCPUExtension(Ecx & (1 << 23), "POPCNT is supported");
     KiPrintSupportedCPUExtension(Ecx & (1 << 25), "AES is supported");
-    KiPrintSupportedCPUExtension(Ecx & (1 << 28), "AVX is supported");
     KiPrintSupportedCPUExtension(Ecx & (1 << 30), "RDRAND is supported");
+    KiPrintSupportedCpuExtensionAndEnable(Ecx & (1 << 28), "AVX is supported", &KiEnableAVX);
 
     // CPUID(0x80000001): Extended Features
     if (Eax >= 0x80000001) {

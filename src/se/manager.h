@@ -10,30 +10,30 @@
 
 /* TODO: those two functions, PSID* will point to a pointer that will hold the Sid, IdentifierAuthority is who owns this SID, e.g: NT_AUTHORITY. */
 
-STATUS SeCreateSid(
+KERNEL_API STATUS SeCreateSid(
     PSID* Sid,
     ULONG IdentifierAuthority,
     PULONG SubAuthorities,
     UCHAR SubAuthorityCount);
 
 
-STATUS SeCreateSecurityDescriptor(
+KERNEL_API STATUS SeCreateSecurityDescriptor(
     PSECURITY_DESCRIPTOR* SecurityDescriptor,
     PSID Owner,
     PSID Group,
     PACL Dacl,
     PACL Sacl);
 
-void SeLockDacl(
+KERNEL_API void SeLockDacl(
     PSECURITY_DESCRIPTOR SecurityDescriptor);
 
-void SeUnlockDacl(
+KERNEL_API void SeUnlockDacl(
     PSECURITY_DESCRIPTOR SecurityDescriptor);
 
-void SeLockSacl(
+KERNEL_API void SeLockSacl(
     PSECURITY_DESCRIPTOR SecurityDescriptor);
 
-void SeUnlockSacl(
+KERNEL_API void SeUnlockSacl(
     PSECURITY_DESCRIPTOR SecurityDescriptor);
 
 #endif //MANAGER_H
