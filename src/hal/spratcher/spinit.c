@@ -122,8 +122,6 @@ STATUS KiSpratcherInitStage0(void) {
     KiPrintSupportedCPUExtension(Ebx & (1 << 38), "Turbo Boost is supported");
     KiPrintSupportedCPUExtension(Edx & (1 << 0),  "FPU is supported");
 
-    KeDebugPrint("[ Done ] CPUID tests completed\n");
-    KeDebugPrint("[ Done ] Stage 0 Complete.\n");
     KeDebugPrint("[ Done ] Spratcher is now exiting...\n");
 
     return STATUS_SUCCESS; // for now, everything is just successful, we will add more checks later.
